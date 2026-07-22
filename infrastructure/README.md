@@ -9,10 +9,10 @@ Para trocar o domínio ou a hosted zone, edite `HOSTED_ZONE_DOMAIN` e `SUBDOMAIN
 
 1. A hosted zone `planlogweb.com.br` já precisa existir no Route53 da conta AWS de destino.
 2. No GitHub, configure em **Settings → Secrets and variables → Actions**:
-   - `AWS_ACCESS_KEY_ID`
-   - `AWS_SECRET_ACCESS_KEY`
+   - **Preferencial:** `AWS_ROLE_TO_ASSUME` (secret ou variable) para autenticação via OIDC.
+   - **Alternativa:** `AWS_ACCESS_KEY_ID` e `AWS_SECRET_ACCESS_KEY`.
 
-   O usuário IAM correspondente precisa de permissão para: S3, CloudFront, ACM, Route53, e para o bootstrap do CDK (CloudFormation, SSM, IAM — geralmente via policy `AdministratorAccess` ou uma policy dedicada ao CDK).
+   A role/usuário IAM correspondente precisa de permissão para: S3, CloudFront, ACM, Route53, e para o bootstrap do CDK (CloudFormation, SSM, IAM — geralmente via policy `AdministratorAccess` ou uma policy dedicada ao CDK).
 
 ## Deploy
 

@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+import os
+
 import aws_cdk as cdk
 
 from stacks.dashboards_stack import DashboardsStack
@@ -13,8 +15,8 @@ DashboardsStack(
     stack_name,
     env_name=env_name,
     env=cdk.Environment(
-        account=app.node.try_get_context("account"),
-        region="us-east-1",
+        account=app.node.try_get_context("account") or os.environ.get("CDK_DEFAULT_ACCOUNT"),
+        region=os.environ.get("CDK_DEFAULT_REGION", "us-east-1"),
     ),
 )
 

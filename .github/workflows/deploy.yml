@@ -1,0 +1,178 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main, develop]
+
+# Garante que apenas um deploy rode por vez por ambiente; nunca cancela um deploy em andamento
+concurrency:
+  group: deploy-${{ github.ref_name }}
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: us-east-1
+
+jobs:
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Job 0: Resolve variáveis dependentes do ambiente (staging vs production)
+  # ─────────────────────────────────────────────────────────────────────────────
+  setup:
+    name: Configurar ambiente
+    runs-on: ubuntu-latest
+    outputs:
+      stack_name: ${{ steps.vars.outputs.stack_name }}
+      cdk_outputs: ${{ steps.vars.outputs.cdk_outputs }}
+      cdk_env:     ${{ steps.vars.outputs.cdk_env }}
+
+    steps:
+      - name: Definir variáveis por branch
+        id: vars
+        run: |
+          if [ "${{ github.ref_name }}" = "main" ]; then
+            echo "stack_name=Dashboards-Production" >> "$GITHUB_OUTPUT"
+            echo "cdk_outputs=/tmp/cdk-outputs-production.json" >> "$GITHUB_OUTPUT"
+            echo "cdk_env=production" >> "$GITHUB_OUTPUT"
+          else
+            echo "stack_name=Dashboards-Staging" >> "$GITHUB_OUTPUT"
+            echo "cdk_outputs=/tmp/cdk-outputs-staging.json" >> "$GITHUB_OUTPUT"
+            echo "cdk_env=staging" >> "$GITHUB_OUTPUT"
+          fi
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Job 1: Deploy da infraestrutura via CDK (S3 + CloudFront + Route53/ACM)
+  # ─────────────────────────────────────────────────────────────────────────────
+  deploy-infra:
+    name: Deploy Infra (CDK)
+    runs-on: ubuntu-latest
+    needs: [setup]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configurar credenciais AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Instalar AWS CDK CLI
+        run: npm install -g aws-cdk
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-py311-${{ hashFiles('infrastructure/requirements.txt') }}
+          restore-keys: pip-py311-
+
+      - name: Instalar dependências Python
+        run: pip install -r requirements.txt
+        working-directory: infrastructure
+
+      - name: CDK Bootstrap (idempotente)
+        run: |
+          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          cdk bootstrap "aws://$ACCOUNT_ID/$AWS_REGION"
+        working-directory: infrastructure
+
+      - name: CDK Synth
+        run: cdk synth --all --context env=${{ needs.setup.outputs.cdk_env }} --quiet
+        working-directory: infrastructure
+
+      - name: CDK Deploy
+        run: |
+          cdk deploy --all \
+            --context env=${{ needs.setup.outputs.cdk_env }} \
+            --require-approval never \
+            --outputs-file ${{ needs.setup.outputs.cdk_outputs }}
+        working-directory: infrastructure
+
+      - name: Publicar CDK outputs como artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cdk-outputs
+          path: ${{ needs.setup.outputs.cdk_outputs }}
+          retention-days: 1
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Job 2: Deploy dos arquivos estáticos no S3 + invalidação CloudFront
+  # ─────────────────────────────────────────────────────────────────────────────
+  deploy-site:
+    name: Deploy Site (S3 + CloudFront)
+    runs-on: ubuntu-latest
+    needs: [setup, deploy-infra]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configurar credenciais AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Baixar CDK outputs
+        uses: actions/download-artifact@v4
+        with:
+          name: cdk-outputs
+          path: /tmp
+
+      # Extrai o nome do bucket e o ID da distribuição do CDK outputs
+      - name: Extrair variáveis do CDK outputs
+        run: |
+          python3 - <<'EOF'
+          import json, os
+
+          with open("${{ needs.setup.outputs.cdk_outputs }}") as f:
+              outputs = json.load(f)
+
+          stack = outputs.get("${{ needs.setup.outputs.stack_name }}", {})
+
+          def export(key, value):
+              with open(os.environ["GITHUB_ENV"], "a") as f:
+                  f.write(f"{key}={value}\n")
+
+          export("SITE_BUCKET", stack["SiteBucketName"])
+          export("CLOUDFRONT_DISTRIBUTION_ID", stack["CloudFrontDistributionId"])
+          export("SITE_URL", stack["SiteCustomDomain"])
+          EOF
+
+      - name: Deploy — arquivos estáticos para S3
+        run: |
+          aws s3 sync . "s3://$SITE_BUCKET" \
+            --delete \
+            --exclude ".git/*" \
+            --exclude ".github/*" \
+            --exclude ".claude/*" \
+            --exclude "infrastructure/*" \
+            --exclude "*.md" \
+            --exclude "*.html" \
+            --cache-control "public, max-age=3600"
+
+          # HTML sem cache, para que atualizações apareçam imediatamente
+          find . -name "*.html" \
+            -not -path "./.git/*" -not -path "./.github/*" \
+            -not -path "./.claude/*" -not -path "./infrastructure/*" \
+            | while read -r file; do
+              key="${file#./}"
+              aws s3 cp "$file" "s3://$SITE_BUCKET/$key" \
+                --cache-control "no-cache, no-store, must-revalidate"
+            done
+
+      - name: Invalidar cache — CloudFront
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id "$CLOUDFRONT_DISTRIBUTION_ID" \
+            --paths "/*"
+
+      - name: URL do site
+        run: echo "Publicado em $SITE_URL"

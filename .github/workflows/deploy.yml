@@ -4,6 +4,10 @@ on:
   push:
     branches: [main, develop]
 
+permissions:
+  contents: read
+  id-token: write
+
 # Garante que apenas um deploy rode por vez por ambiente; nunca cancela um deploy em andamento
 concurrency:
   group: deploy-${{ github.ref_name }}
@@ -11,6 +15,7 @@ concurrency:
 
 env:
   AWS_REGION: us-east-1
+  AWS_ROLE_TO_ASSUME: ${{ secrets.AWS_ROLE_TO_ASSUME || vars.AWS_ROLE_TO_ASSUME }}
 
 jobs:
   # ─────────────────────────────────────────────────────────────────────────────
@@ -49,12 +54,27 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Configurar credenciais AWS
+      - name: Configurar credenciais AWS via OIDC
+        if: ${{ env.AWS_ROLE_TO_ASSUME != '' }}
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: ${{ env.AWS_ROLE_TO_ASSUME }}
+          role-session-name: dashboards-deploy-${{ github.run_id }}
+
+      - name: Configurar credenciais AWS via access key
+        if: ${{ env.AWS_ROLE_TO_ASSUME == '' && secrets.AWS_ACCESS_KEY_ID != '' && secrets.AWS_SECRET_ACCESS_KEY != '' }}
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
+
+      - name: Validar configuração de credenciais AWS
+        if: ${{ env.AWS_ROLE_TO_ASSUME == '' && (secrets.AWS_ACCESS_KEY_ID == '' || secrets.AWS_SECRET_ACCESS_KEY == '') }}
+        run: |
+          echo "::error::Configure AWS_ROLE_TO_ASSUME (OIDC) ou as secrets AWS_ACCESS_KEY_ID e AWS_SECRET_ACCESS_KEY."
+          exit 1
 
       - uses: actions/setup-python@v5
         with:
@@ -113,12 +133,27 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Configurar credenciais AWS
+      - name: Configurar credenciais AWS via OIDC
+        if: ${{ env.AWS_ROLE_TO_ASSUME != '' }}
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: ${{ env.AWS_ROLE_TO_ASSUME }}
+          role-session-name: dashboards-deploy-${{ github.run_id }}
+
+      - name: Configurar credenciais AWS via access key
+        if: ${{ env.AWS_ROLE_TO_ASSUME == '' && secrets.AWS_ACCESS_KEY_ID != '' && secrets.AWS_SECRET_ACCESS_KEY != '' }}
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
+
+      - name: Validar configuração de credenciais AWS
+        if: ${{ env.AWS_ROLE_TO_ASSUME == '' && (secrets.AWS_ACCESS_KEY_ID == '' || secrets.AWS_SECRET_ACCESS_KEY == '') }}
+        run: |
+          echo "::error::Configure AWS_ROLE_TO_ASSUME (OIDC) ou as secrets AWS_ACCESS_KEY_ID e AWS_SECRET_ACCESS_KEY."
+          exit 1
 
       - name: Baixar CDK outputs
         uses: actions/download-artifact@v4

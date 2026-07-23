@@ -27,29 +27,10 @@ from constructs import Construct
 HOSTED_ZONE_DOMAIN = "planlogweb.com.br"
 SUBDOMAIN = "dashboards"
 
-# Restringe o acesso à distribuição: só aceita requisições cujo Referer
-# indique que a página foi carregada dentro de um iframe do Google Sites.
-ALLOWED_REFERER_PREFIX = "https://sites.google.com/"
-REFERER_CHECK_JS = f"""
-function handler(event) {{
-    var request = event.request;
-    var referer = request.headers.referer && request.headers.referer.value;
-    var allowed = "{ALLOWED_REFERER_PREFIX}";
-
-    if (!referer || referer.indexOf(allowed) !== 0) {{
-        return {{
-            statusCode: 403,
-            statusDescription: "Forbidden",
-            headers: {{
-                "content-type": {{ value: "text/plain" }}
-            }},
-            body: "Acesso permitido apenas via Google Sites."
-        }};
-    }}
-
-    return request;
-}}
-"""
+# Restringe o embed da distribuição a iframes do Google Sites via CSP
+# frame-ancestors (aplicado pelo navegador com base na origem real do
+# documento pai — não depende de headers enviados pelo Google Sites).
+ALLOWED_FRAME_ANCESTOR = "https://sites.google.com"
 
 
 class DashboardsStack(Stack):
@@ -89,21 +70,13 @@ class DashboardsStack(Stack):
         # ------------------------------------------------------------------
         # CloudFront — CDN com HTTPS na frente do bucket
         # ------------------------------------------------------------------
-        referer_check_function = cloudfront.Function(
-            self, "RefererCheckFunction",
-            function_name=f"{prefix}-referer-check",
-            code=cloudfront.FunctionCode.from_inline(REFERER_CHECK_JS),
-            runtime=cloudfront.FunctionRuntime.JS_2_0,
-        )
-
-        # Impede que o site seja embutido em iframe fora do Google Sites,
-        # mesmo que alguém consiga contornar a checagem de Referer acima.
+        # Impede que o site seja embutido em iframe fora do Google Sites.
         frame_ancestors_policy = cloudfront.ResponseHeadersPolicy(
             self, "FrameAncestorsPolicy",
             response_headers_policy_name=f"{prefix}-frame-ancestors",
             security_headers_behavior=cloudfront.ResponseSecurityHeadersBehavior(
                 content_security_policy=cloudfront.ResponseHeadersContentSecurityPolicy(
-                    content_security_policy=f"frame-ancestors {ALLOWED_REFERER_PREFIX.rstrip('/')};",
+                    content_security_policy=f"frame-ancestors {ALLOWED_FRAME_ANCESTOR};",
                     override=True,
                 ),
             ),
@@ -118,12 +91,6 @@ class DashboardsStack(Stack):
                 viewer_protocol_policy=cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
                 cache_policy=cloudfront.CachePolicy.CACHING_OPTIMIZED,
                 response_headers_policy=frame_ancestors_policy,
-                function_associations=[
-                    cloudfront.FunctionAssociation(
-                        function=referer_check_function,
-                        event_type=cloudfront.FunctionEventType.VIEWER_REQUEST,
-                    ),
-                ],
             ),
             default_root_object="index.html",
             error_responses=[

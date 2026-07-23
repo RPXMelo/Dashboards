@@ -241,9 +241,32 @@ canvas{max-width:100%}
   .report-header{padding:20px}
   .form-grid-7{grid-template-columns:1fr}
 }
+
+/* AUTH GATE */
+body:not(.authed) #sidebar,
+body:not(.authed) #main{display:none}
+#auth-overlay{position:fixed;inset:0;background:var(--sidebar-bg);display:flex;align-items:center;justify-content:center;z-index:9999;padding:16px}
+body.authed #auth-overlay{display:none}
+#auth-box{background:var(--surface);border-radius:12px;padding:32px;width:100%;max-width:340px;box-shadow:0 10px 30px rgba(0,0,0,.3);text-align:center}
+#auth-box .logo-icon{width:48px;height:48px;background:var(--color-primary);border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;color:#fff;margin:0 auto 16px}
+#auth-box h2{font-size:16px;font-weight:600;margin-bottom:20px;color:var(--text)}
+#auth-box input{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;margin-bottom:12px}
+#auth-box button{width:100%;padding:10px 12px;border:none;border-radius:8px;background:var(--color-primary);color:#fff;font-size:14px;font-weight:600;cursor:pointer}
+#auth-error{color:var(--color-danger);font-size:13px;margin-bottom:12px;display:none}
 </style>
 </head>
 <body>
+
+<!-- AUTH GATE -->
+<div id="auth-overlay">
+  <form id="auth-box" onsubmit="return checkAuthPassword(event)">
+    <div class="logo-icon">5S</div>
+    <h2>Auditoria 5S — Acesso restrito</h2>
+    <div id="auth-error">Senha incorreta.</div>
+    <input type="password" id="auth-password" placeholder="Senha" autocomplete="current-password" autofocus>
+    <button type="submit">Entrar</button>
+  </form>
+</div>
 
 <!-- SIDEBAR OVERLAY (mobile) -->
 <div id="sidebar-overlay" onclick="closeSidebar()"></div>
@@ -298,6 +321,34 @@ canvas{max-width:100%}
 <div id="modal-container"></div>
 
 <script>
+/* AUTH GATE — senha única, hash SHA-256 comparado no navegador */
+const AUTH_PASSWORD_HASH = "a796a3025427f1dcd2941259141904873cfc8e82745298185d6171a77ae0a2ea";
+const AUTH_SESSION_KEY = "auditoria5s_auth";
+
+async function sha256Hex(text){
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
+async function checkAuthPassword(evt){
+  evt.preventDefault();
+  const input = document.getElementById("auth-password");
+  const hash = await sha256Hex(input.value);
+  if (hash === AUTH_PASSWORD_HASH){
+    sessionStorage.setItem(AUTH_SESSION_KEY, "1");
+    document.body.classList.add("authed");
+  } else {
+    document.getElementById("auth-error").style.display = "block";
+    input.value = "";
+    input.focus();
+  }
+  return false;
+}
+
+if (sessionStorage.getItem(AUTH_SESSION_KEY) === "1"){
+  document.body.classList.add("authed");
+}
+
 /* DB_START */
 const DATABASE = {
   "version": "1.0",

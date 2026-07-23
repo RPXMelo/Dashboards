@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(aws sts *)",
+      "Bash(aws s3 *)",
+      "Bash(git -C /home/giva/workspace/repositorio/Dashboards ls-files \"*.html\")",
+      "Bash(python3 -c \"import ast; ast.parse\\(open\\('stacks/dashboards_stack.py'\\).read\\(\\)\\)\")",
+      "Bash(pip show *)",
+      "Bash(python3 -m pip show aws-cdk-lib)",
+      "Bash(python3 -c \"import ast; ast.parse\\(open\\('app.py'\\).read\\(\\)\\); ast.parse\\(open\\('stacks/auditoria_stack.py'\\).read\\(\\)\\); print\\('OK'\\)\")",
+      "Bash(python3 -c ' *)",
+      "Bash(pip install *)",
+      "Bash(python3 -m http.server 8791)",
+      "Bash(curl -s http://localhost:8791/index.html)",
+      "Bash(aws route53 *)",
+      "Bash(aws service-quotas *)",
+      "Bash(aws cloudfront *)",
+      "Bash(aws apigatewayv2 *)",
+      "Bash(aws support *)",
+      "Bash(gh workflow *)",
+      "Bash(cdk --version)",
+      "Bash(python3 -c \"import aws_cdk\")"
+    ]
+  }
+}

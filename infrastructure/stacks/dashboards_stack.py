@@ -30,7 +30,11 @@ SUBDOMAIN = "dashboards"
 # Restringe o embed da distribuição a iframes do Google Sites via CSP
 # frame-ancestors (aplicado pelo navegador com base na origem real do
 # documento pai — não depende de headers enviados pelo Google Sites).
-ALLOWED_FRAME_ANCESTOR = "https://sites.google.com"
+# frame-ancestors exige que TODOS os ancestrais do frame combinem com a
+# política, e o Google Sites embute conteúdo customizado através de um
+# iframe sandbox intermediário em *.googleusercontent.com, por isso esse
+# domínio também precisa estar na lista.
+ALLOWED_FRAME_ANCESTORS = "https://sites.google.com https://*.googleusercontent.com"
 
 
 class DashboardsStack(Stack):
@@ -76,7 +80,7 @@ class DashboardsStack(Stack):
             response_headers_policy_name=f"{prefix}-frame-ancestors",
             security_headers_behavior=cloudfront.ResponseSecurityHeadersBehavior(
                 content_security_policy=cloudfront.ResponseHeadersContentSecurityPolicy(
-                    content_security_policy=f"frame-ancestors {ALLOWED_FRAME_ANCESTOR};",
+                    content_security_policy=f"frame-ancestors {ALLOWED_FRAME_ANCESTORS};",
                     override=True,
                 ),
             ),

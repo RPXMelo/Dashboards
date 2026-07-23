@@ -1,11 +1,12 @@
-name: Deploy
+name: Deploy Auditoria
 
 on:
   push:
     branches: [main, develop]
-    paths-ignore:
+    paths:
       - 'auditoria/**'
       - 'infrastructure/stacks/auditoria_stack.py'
+      - 'infrastructure/app.py'
       - '.github/workflows/deploy-auditoria.yml'
 
 permissions:
@@ -14,7 +15,7 @@ permissions:
 
 # Garante que apenas um deploy rode por vez por ambiente; nunca cancela um deploy em andamento
 concurrency:
-  group: deploy-${{ github.ref_name }}
+  group: deploy-auditoria-${{ github.ref_name }}
   cancel-in-progress: false
 
 env:
@@ -38,12 +39,12 @@ jobs:
         id: vars
         run: |
           if [ "${{ github.ref_name }}" = "main" ]; then
-            echo "stack_name=Dashboards-Production" >> "$GITHUB_OUTPUT"
-            echo "cdk_outputs=/tmp/cdk-outputs-production.json" >> "$GITHUB_OUTPUT"
+            echo "stack_name=Auditoria-Production" >> "$GITHUB_OUTPUT"
+            echo "cdk_outputs=/tmp/cdk-outputs-auditoria-production.json" >> "$GITHUB_OUTPUT"
             echo "cdk_env=production" >> "$GITHUB_OUTPUT"
           else
-            echo "stack_name=Dashboards-Staging" >> "$GITHUB_OUTPUT"
-            echo "cdk_outputs=/tmp/cdk-outputs-staging.json" >> "$GITHUB_OUTPUT"
+            echo "stack_name=Auditoria-Staging" >> "$GITHUB_OUTPUT"
+            echo "cdk_outputs=/tmp/cdk-outputs-auditoria-staging.json" >> "$GITHUB_OUTPUT"
             echo "cdk_env=staging" >> "$GITHUB_OUTPUT"
           fi
 
@@ -70,7 +71,7 @@ jobs:
         with:
           aws-region: ${{ env.AWS_REGION }}
           role-to-assume: ${{ env.AWS_ROLE_TO_ASSUME }}
-          role-session-name: dashboards-deploy-${{ github.run_id }}
+          role-session-name: auditoria-deploy-${{ github.run_id }}
 
       - name: Configurar credenciais AWS via access key
         if: ${{ env.AWS_ROLE_TO_ASSUME == '' && steps.creds.outputs.has_access_key == 'true' }}
@@ -128,7 +129,7 @@ jobs:
       - name: Publicar CDK outputs como artifact
         uses: actions/upload-artifact@v4
         with:
-          name: cdk-outputs
+          name: cdk-outputs-auditoria
           path: ${{ needs.setup.outputs.cdk_outputs }}
           retention-days: 1
 
@@ -155,7 +156,7 @@ jobs:
         with:
           aws-region: ${{ env.AWS_REGION }}
           role-to-assume: ${{ env.AWS_ROLE_TO_ASSUME }}
-          role-session-name: dashboards-deploy-${{ github.run_id }}
+          role-session-name: auditoria-deploy-${{ github.run_id }}
 
       - name: Configurar credenciais AWS via access key
         if: ${{ env.AWS_ROLE_TO_ASSUME == '' && steps.creds.outputs.has_access_key == 'true' }}
@@ -174,7 +175,7 @@ jobs:
       - name: Baixar CDK outputs
         uses: actions/download-artifact@v4
         with:
-          name: cdk-outputs
+          name: cdk-outputs-auditoria
           path: /tmp
 
       # Extrai o nome do bucket e o ID da distribuição do CDK outputs
@@ -199,27 +200,17 @@ jobs:
 
       - name: Deploy — arquivos estáticos para S3
         run: |
-          aws s3 sync . "s3://$SITE_BUCKET" \
+          aws s3 sync auditoria/ "s3://$SITE_BUCKET" \
             --delete \
-            --exclude ".git/*" \
-            --exclude ".github/*" \
-            --exclude ".claude/*" \
-            --exclude "infrastructure/*" \
-            --exclude "auditoria/*" \
-            --exclude "*.md" \
             --exclude "*.html" \
             --cache-control "public, max-age=3600"
 
           # HTML sem cache, para que atualizações apareçam imediatamente
-          find . -name "*.html" \
-            -not -path "./.git/*" -not -path "./.github/*" \
-            -not -path "./.claude/*" -not -path "./infrastructure/*" \
-            -not -path "./auditoria/*" \
-            | while read -r file; do
-              key="${file#./}"
-              aws s3 cp "$file" "s3://$SITE_BUCKET/$key" \
-                --cache-control "no-cache, no-store, must-revalidate"
-            done
+          find auditoria -name "*.html" | while read -r file; do
+            key="${file#auditoria/}"
+            aws s3 cp "$file" "s3://$SITE_BUCKET/$key" \
+              --cache-control "no-cache, no-store, must-revalidate"
+          done
 
       - name: Invalidar cache — CloudFront
         run: |

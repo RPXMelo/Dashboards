@@ -2,8 +2,14 @@
 
 CDK (Python) que provisiona a hospedagem estática deste site: S3 (privado) + CloudFront + Route53 + ACM.
 
-Domínio: `dashboards.planlogweb.com.br` (produção) / `staging.dashboards.planlogweb.com.br` (staging).
-Para trocar o domínio ou a hosted zone, edite `HOSTED_ZONE_DOMAIN` e `SUBDOMAIN` em `stacks/dashboards_stack.py`.
+Duas stacks independentes, cada uma com bucket, distribuição CloudFront e subdomínio próprios:
+
+| Stack                 | Conteúdo servido      | Domínio (produção)                | Domínio (staging)                          |
+|------------------------|------------------------|------------------------------------|---------------------------------------------|
+| `Dashboards-*`         | Todo o repo, exceto `auditoria/` | `dashboards.planlogweb.com.br`     | `staging.dashboards.planlogweb.com.br`       |
+| `Auditoria-*`          | Apenas a pasta `auditoria/`      | `auditoria5s.planlogweb.com.br`    | `staging.auditoria5s.planlogweb.com.br`      |
+
+Para trocar domínio ou hosted zone, edite `HOSTED_ZONE_DOMAIN`/`SUBDOMAIN` em `stacks/dashboards_stack.py` ou `stacks/auditoria_stack.py`, conforme o caso.
 
 ## Pré-requisitos únicos (antes do primeiro deploy)
 
@@ -16,10 +22,12 @@ Para trocar o domínio ou a hosted zone, edite `HOSTED_ZONE_DOMAIN` e `SUBDOMAIN
 
 ## Deploy
 
-- Push em `main` → stack `Dashboards-Production`, domínio `dashboards.planlogweb.com.br`.
-- Push em `develop` → stack `Dashboards-Staging`, domínio `staging.dashboards.planlogweb.com.br`.
+Cada stack tem seu próprio workflow, disparado apenas quando os arquivos relevantes mudam:
 
-O workflow `.github/workflows/deploy.yml` faz: `cdk deploy` (cria/atualiza infra) → `aws s3 sync` (publica os arquivos) → invalidação do CloudFront.
+- **`.github/workflows/deploy.yml`** — stack `Dashboards-*`. Dispara em push a `main`/`develop`, exceto quando só `auditoria/**` muda.
+- **`.github/workflows/deploy-auditoria.yml`** — stack `Auditoria-*`. Dispara em push a `main`/`develop` apenas quando `auditoria/**` (ou a própria stack/workflow) muda.
+
+Cada workflow faz: `cdk deploy <stack>` (cria/atualiza a infra isolada) → `aws s3 sync` do respectivo conteúdo → invalidação do seu CloudFront.
 
 ## Deploy manual (local)
 
@@ -29,5 +37,7 @@ pip install -r requirements.txt
 npm install -g aws-cdk
 
 cdk bootstrap aws://<ACCOUNT_ID>/us-east-1
-cdk deploy --context env=production   # ou env=staging
+
+cdk deploy Dashboards-Production --context env=production   # ou Dashboards-Staging --context env=staging
+cdk deploy Auditoria-Production  --context env=production   # ou Auditoria-Staging  --context env=staging
 ```

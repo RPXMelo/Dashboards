@@ -1,0 +1,1380 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sistema de Auditoria 5S</title>
+<style>
+:root {
+  --color-primary: #1e40af;
+  --color-success: #16a34a;
+  --color-warning: #d97706;
+  --color-danger: #dc2626;
+  --color-info: #0891b2;
+  --nota-1: #dc2626;
+  --nota-2: #f97316;
+  --nota-3: #eab308;
+  --nota-4: #22c55e;
+  --nota-5: #3b82f6;
+  --bg: #f8fafc;
+  --surface: #ffffff;
+  --border: #e2e8f0;
+  --text: #1e293b;
+  --text-muted: #64748b;
+  --sidebar-bg: #1e293b;
+  --sidebar-text: #f1f5f9;
+  --sidebar-w: 240px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh}
+a{color:inherit;text-decoration:none}
+
+/* SIDEBAR */
+#sidebar{width:var(--sidebar-w);background:var(--sidebar-bg);color:var(--sidebar-text);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:100;transition:transform .3s}
+#sidebar .logo{padding:20px 16px;border-bottom:1px solid rgba(255,255,255,.1);display:flex;align-items:center;gap:12px}
+#sidebar .logo .logo-icon{width:36px;height:36px;background:var(--color-primary);border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;color:#fff;flex-shrink:0}
+#sidebar .logo span{font-weight:700;font-size:15px;line-height:1.2}
+#sidebar nav{flex:1;padding:12px 8px;overflow-y:auto}
+#sidebar nav .nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;cursor:pointer;transition:background .15s;font-size:14px;color:var(--sidebar-text);margin-bottom:2px;border:none;background:none;width:100%;text-align:left}
+#sidebar nav .nav-item:hover{background:rgba(255,255,255,.1)}
+#sidebar nav .nav-item.active{background:var(--color-primary);color:#fff}
+#sidebar nav .nav-item svg{width:18px;height:18px;flex-shrink:0;opacity:.8}
+#sidebar nav .nav-item.active svg{opacity:1}
+#sidebar .sidebar-footer{padding:12px;border-top:1px solid rgba(255,255,255,.1);font-size:12px;color:rgba(255,255,255,.4);text-align:center}
+
+/* MAIN */
+#main{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column;min-height:100vh}
+#topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 24px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:50}
+#topbar #hamburger{display:none;background:none;border:none;cursor:pointer;padding:4px}
+#topbar h1{font-size:18px;font-weight:600;flex:1}
+#content{padding:24px;flex:1}
+
+/* CARDS */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.card-title{font-size:15px;font-weight:600}
+
+/* GRID */
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+
+/* SUMMARY CARDS */
+.summary-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;display:flex;align-items:center;gap:16px}
+.summary-card .icon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.summary-card .info .label{font-size:12px;color:var(--text-muted);margin-bottom:4px}
+.summary-card .info .value{font-size:28px;font-weight:700;line-height:1}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;border:none;cursor:pointer;font-size:14px;font-weight:500;transition:all .15s}
+.btn-primary{background:var(--color-primary);color:#fff}
+.btn-primary:hover{background:#1d3899}
+.btn-success{background:var(--color-success);color:#fff}
+.btn-success:hover{background:#15803d}
+.btn-danger{background:var(--color-danger);color:#fff}
+.btn-danger:hover{background:#b91c1c}
+.btn-warning{background:var(--color-warning);color:#fff}
+.btn-warning:hover{background:#b45309}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--text)}
+.btn-outline:hover{background:var(--bg)}
+.btn-sm{padding:5px 10px;font-size:13px}
+.btn-icon{padding:6px;border-radius:6px;background:none;border:none;cursor:pointer;color:var(--text-muted);transition:background .15s}
+.btn-icon:hover{background:var(--bg);color:var(--text)}
+
+/* FORMS */
+.form-group{margin-bottom:16px}
+.form-label{display:block;font-size:13px;font-weight:500;margin-bottom:6px;color:var(--text)}
+.form-control{width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;color:var(--text);background:var(--surface);outline:none;transition:border .15s}
+.form-control:focus{border-color:var(--color-primary);box-shadow:0 0 0 3px rgba(30,64,175,.1)}
+.form-control[disabled]{background:var(--bg);color:var(--text-muted)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+
+/* TABLES */
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;padding:10px 12px;border-bottom:2px solid var(--border);font-weight:600;font-size:12px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;white-space:nowrap}
+td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--bg)}
+
+/* BADGES */
+.badge{display:inline-flex;align-items:center;padding:3px 8px;border-radius:20px;font-size:12px;font-weight:600;white-space:nowrap}
+.badge-danger{background:#fee2e2;color:#dc2626}
+.badge-warning{background:#ffedd5;color:#c2410c}
+.badge-yellow{background:#fef9c3;color:#854d0e}
+.badge-success{background:#dcfce7;color:#15803d}
+.badge-info{background:#e0f2fe;color:#075985}
+.badge-gray{background:#f1f5f9;color:#64748b}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px}
+.modal{background:var(--surface);border-radius:16px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.modal-header{padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-size:16px;font-weight:600}
+.modal-body{padding:24px}
+.modal-footer{padding:16px 24px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end}
+
+/* TOAST */
+#toast-container{position:fixed;bottom:24px;right:24px;z-index:500;display:flex;flex-direction:column;gap:8px}
+.toast{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 16px;box-shadow:0 4px 20px rgba(0,0,0,.15);font-size:14px;max-width:380px;animation:slideIn .3s ease;display:flex;align-items:flex-start;gap:10px}
+.toast.success{border-left:4px solid var(--color-success)}
+.toast.warning{border-left:4px solid var(--color-warning)}
+.toast.danger{border-left:4px solid var(--color-danger)}
+@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+
+/* NOTA BUTTONS */
+.nota-btns{display:flex;gap:4px;flex-wrap:wrap}
+.nota-btn{padding:5px 10px;border-radius:20px;border:2px solid transparent;cursor:pointer;font-size:12px;font-weight:600;transition:all .15s;background:var(--bg);color:var(--text-muted)}
+.nota-btn[data-nota="1"].selected,.nota-btn[data-nota="1"]:hover{background:#fee2e2;color:#dc2626;border-color:#dc2626}
+.nota-btn[data-nota="2"].selected,.nota-btn[data-nota="2"]:hover{background:#ffedd5;color:#f97316;border-color:#f97316}
+.nota-btn[data-nota="3"].selected,.nota-btn[data-nota="3"]:hover{background:#fef9c3;color:#ca8a04;border-color:#eab308}
+.nota-btn[data-nota="4"].selected,.nota-btn[data-nota="4"]:hover{background:#dcfce7;color:#16a34a;border-color:#22c55e}
+.nota-btn[data-nota="5"].selected,.nota-btn[data-nota="5"]:hover{background:#dbeafe;color:#2563eb;border-color:#3b82f6}
+
+/* QUESTIONÁRIO */
+.senso-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:12px;overflow:hidden}
+.senso-header{padding:14px 18px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;transition:background .15s}
+.senso-header:hover{background:var(--bg)}
+.senso-title{font-weight:600;font-size:15px;display:flex;align-items:center;gap:8px}
+.senso-score-badge{font-size:13px;font-weight:700;padding:3px 10px;border-radius:20px}
+.senso-body{padding:0 18px 18px;display:none}
+.senso-body.open{display:block}
+.item-row{padding:14px 0;border-bottom:1px solid var(--border)}
+.item-row:last-child{border-bottom:none}
+.item-row.critico{background:linear-gradient(90deg,#fee2e2 0%,transparent 100%);margin:0 -18px;padding:14px 18px;border-radius:0}
+.item-row.critico .item-header::after{content:"⚠️";margin-left:8px}
+.item-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px}
+.item-num{font-size:12px;color:var(--text-muted);font-weight:600}
+.item-text{font-size:14px;flex:1;margin:0 12px}
+.obs-toggle{font-size:12px;color:var(--color-primary);cursor:pointer;border:none;background:none;padding:2px 6px}
+.obs-field{margin-top:8px;display:none}
+.obs-field.open{display:block}
+
+/* PROGRESS */
+.progress-bar-wrap{background:var(--border);border-radius:99px;height:8px;overflow:hidden}
+.progress-bar{height:100%;border-radius:99px;transition:width .3s}
+.progress-header{display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px}
+
+/* ACCORDION ARROW */
+.arrow{transition:transform .2s;display:inline-block}
+.arrow.open{transform:rotate(180deg)}
+
+/* TABS */
+.tabs{display:flex;gap:4px;border-bottom:2px solid var(--border);margin-bottom:20px}
+.tab{padding:8px 16px;border:none;background:none;cursor:pointer;font-size:14px;font-weight:500;color:var(--text-muted);border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s}
+.tab.active{color:var(--color-primary);border-bottom-color:var(--color-primary)}
+
+/* CHARTS */
+.chart-container{position:relative}
+canvas{max-width:100%}
+
+/* GAUGE */
+.gauge-wrap{display:flex;flex-direction:column;align-items:center}
+.gauge-score{font-size:36px;font-weight:700;margin-top:8px}
+.gauge-label{font-size:14px;color:var(--text-muted)}
+
+/* 5W2H */
+.action-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:16px}
+.action-card-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.action-card-body{padding:18px}
+.form-grid-7{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+/* BANNER */
+.banner{background:#fef9c3;border:1px solid #fbbf24;border-radius:10px;padding:12px 16px;font-size:13px;display:flex;align-items:flex-start;gap:10px;margin-bottom:20px}
+.banner svg{width:18px;height:18px;flex-shrink:0;color:#d97706;margin-top:1px}
+
+/* FILTER BAR */
+.filter-bar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;align-items:flex-end}
+.filter-bar .form-group{margin-bottom:0;min-width:160px}
+
+/* REPORT */
+.report-header{background:linear-gradient(135deg,#1e40af 0%,#1d4ed8 100%);color:#fff;border-radius:16px;padding:28px;margin-bottom:24px}
+.report-company{font-size:22px;font-weight:700;margin-bottom:4px}
+.report-meta{font-size:14px;opacity:.85;line-height:1.8}
+.report-score-big{font-size:56px;font-weight:800;line-height:1}
+
+/* SENSO SCORE ROW */
+.senso-scores{display:flex;flex-direction:column;gap:10px;margin-top:16px}
+.senso-score-row{display:flex;align-items:center;gap:12px}
+.senso-score-row .name{font-size:13px;font-weight:600;width:80px;flex-shrink:0}
+.senso-score-row .bar-wrap{flex:1;background:var(--border);border-radius:99px;height:12px;overflow:hidden}
+.senso-score-row .bar{height:100%;border-radius:99px}
+.senso-score-row .pct{font-size:13px;font-weight:700;width:40px;text-align:right;flex-shrink:0}
+
+/* EMPTY STATE */
+.empty-state{text-align:center;padding:60px 20px;color:var(--text-muted)}
+.empty-state .icon{font-size:56px;margin-bottom:16px}
+.empty-state h3{font-size:18px;color:var(--text);margin-bottom:8px}
+.empty-state p{font-size:14px;margin-bottom:20px}
+
+/* SIDEBAR OVERLAY */
+#sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:90}
+
+/* PRINT */
+@media print {
+  .no-print{display:none!important}
+  #sidebar,#topbar,#sidebar-overlay{display:none!important}
+  #main{margin-left:0!important}
+  #content{padding:0!important}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .page-break{page-break-before:always}
+  .card,.senso-card,.action-card,.summary-card{page-break-inside:avoid;box-shadow:none!important}
+  @page{size:A4;margin:15mm}
+  body{background:white}
+  .report-header{background:#1e40af!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+
+/* RESPONSIVE */
+@media(max-width:900px){
+  #sidebar{transform:translateX(-100%)}
+  #sidebar.open{transform:translateX(0)}
+  #sidebar-overlay.open{display:block}
+  #main{margin-left:0}
+  #topbar #hamburger{display:flex}
+  .grid-4{grid-template-columns:repeat(2,1fr)}
+  .grid-2{grid-template-columns:1fr}
+  .form-row{grid-template-columns:1fr}
+}
+@media(max-width:560px){
+  .grid-4{grid-template-columns:1fr}
+  #content{padding:16px}
+  .report-header{padding:20px}
+  .form-grid-7{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR OVERLAY (mobile) -->
+<div id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+<!-- SIDEBAR -->
+<aside id="sidebar">
+  <div class="logo">
+    <div class="logo-icon">5S</div>
+    <span>Auditoria 5S<br><small style="font-weight:400;opacity:.7;font-size:12px">Lean Management</small></span>
+  </div>
+  <nav>
+    <button class="nav-item active" onclick="navigate('dashboard')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Início
+    </button>
+    <button class="nav-item" onclick="navigate('nova-auditoria')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+      Nova Auditoria
+    </button>
+    <button class="nav-item" onclick="navigate('historico')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      Histórico
+    </button>
+    <button class="nav-item" onclick="navigate('cadastros')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+      Cadastros
+    </button>
+    <button class="nav-item" onclick="imprimirRelatorio()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+      Imprimir Relatório
+    </button>
+  </nav>
+  <div class="sidebar-footer">v1.0 © 2025 RX Log</div>
+</aside>
+
+<!-- MAIN -->
+<div id="main">
+  <header id="topbar" class="no-print">
+    <button id="hamburger" onclick="toggleSidebar()">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+    <h1 id="page-title">Início</h1>
+    <button class="btn btn-primary btn-sm no-print" onclick="navigate('nova-auditoria')">+ Nova Auditoria</button>
+  </header>
+  <main id="content"></main>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div id="toast-container"></div>
+
+<!-- MODAL CONTAINER -->
+<div id="modal-container"></div>
+
+<script>
+/* DB_START */
+const DATABASE = {
+  "version": "1.0",
+  "empresas": [],
+  "unidades": [],
+  "auditores": [],
+  "auditorias": []
+};
+/* DB_END */
+
+// ===================== UTILS =====================
+function generateId() {
+  return Date.now().toString(36) + Math.random().toString(36).substr(2);
+}
+function formatDate(iso) {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleString('pt-BR');
+}
+function formatDateShort(iso) {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleDateString('pt-BR');
+}
+function getScoreColor(s) {
+  if (s <= 50) return 'var(--nota-1)';
+  if (s <= 70) return 'var(--nota-2)';
+  if (s <= 85) return 'var(--nota-4)';
+  return 'var(--nota-5)';
+}
+function getClassificacao(s) {
+  if (s <= 50) return {label:'Crítico', cls:'badge-danger'};
+  if (s <= 70) return {label:'Atenção', cls:'badge-warning'};
+  if (s <= 85) return {label:'Adequado', cls:'badge-success'};
+  return {label:'Excelência', cls:'badge-info'};
+}
+function escHtml(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function showToast(msg, type='success', duration=4000) {
+  const tc = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  t.className = 'toast ' + type;
+  t.innerHTML = `<span>${msg}</span>`;
+  tc.appendChild(t);
+  setTimeout(() => t.remove(), duration);
+}
+function showModal(html) {
+  const mc = document.getElementById('modal-container');
+  mc.innerHTML = `<div class="modal-overlay" id="modal-overlay" onclick="closeModalOnOverlay(event)">${html}</div>`;
+}
+function closeModal() {
+  document.getElementById('modal-container').innerHTML = '';
+}
+function closeModalOnOverlay(e) {
+  if (e.target.id === 'modal-overlay') closeModal();
+}
+
+// ===================== SAVE =====================
+function saveDatabase() {
+  const newDbString = JSON.stringify(DATABASE, null, 2);
+  const htmlContent = document.documentElement.outerHTML;
+  const ms = '/* DB_START */';
+  const me = '/* DB_END */';
+  const newHtml = htmlContent.replace(
+    new RegExp(ms.replace(/\//g,'\\/').replace(/\*/g,'\\*') + '[\\s\\S]*?' + me.replace(/\//g,'\\/').replace(/\*/g,'\\*')),
+    ms + '\nconst DATABASE = ' + newDbString + ';\n' + me
+  );
+  const blob = new Blob([newHtml], {type:'text/html'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'auditoria-5s.html';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(a.href);
+  showToast('✅ Arquivo atualizado salvo! Substitua o arquivo anterior no Drive.', 'success', 6000);
+}
+
+// ===================== NAVIGATION =====================
+let currentPage = 'dashboard';
+let currentAuditoriaId = null;
+
+function navigate(page, param) {
+  currentPage = page;
+  if (param) currentAuditoriaId = param;
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const map = {dashboard:0,'nova-auditoria':1,historico:2,cadastros:3};
+  const idx = map[page] ?? (page==='relatorio'?2:3);
+  const items = document.querySelectorAll('.nav-item');
+  if (items[idx]) items[idx].classList.add('active');
+  closeSidebar();
+  render();
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebar-overlay').classList.toggle('open');
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebar-overlay').classList.remove('open');
+}
+
+// ===================== RENDER =====================
+function render() {
+  const c = document.getElementById('content');
+  const titles = {
+    dashboard:'Início',
+    'nova-auditoria':'Nova Auditoria',
+    historico:'Histórico de Auditorias',
+    cadastros:'Cadastros',
+    relatorio:'Relatório de Auditoria'
+  };
+  document.getElementById('page-title').textContent = titles[currentPage] || '';
+  if (currentPage === 'dashboard') renderDashboard();
+  else if (currentPage === 'nova-auditoria') renderNovaAuditoria();
+  else if (currentPage === 'historico') renderHistorico();
+  else if (currentPage === 'cadastros') renderCadastros();
+  else if (currentPage === 'relatorio') renderRelatorio(currentAuditoriaId);
+}
+
+// ===================== QUESTIONÁRIOS =====================
+const QUESTOES = {
+  producao: getQuestoesProducao(),
+  manutencao: getQuestoesProducao(),
+  logistica: getQuestoesProducao(),
+  almoxarifado: getQuestoesAlmoxarifado()
+};
+const SENSO_NAMES = ['Seiri — Utilização','Seiton — Organização','Seiso — Limpeza','Seiketsu — Padronização','Shitsuke — Disciplina'];
+const SENSO_SHORT = ['Seiri','Seiton','Seiso','Seiketsu','Shitsuke'];
+
+function getQuestoesProducao() {
+  return [
+    // Seiri
+    {id:'s1q1',senso:1,num:'1.1',text:'Existem materiais desnecessários na área?'},
+    {id:'s1q2',senso:1,num:'1.2',text:'Ferramentas sem uso foram removidas?'},
+    {id:'s1q3',senso:1,num:'1.3',text:'Há sucata acumulada próxima às máquinas?'},
+    {id:'s1q4',senso:1,num:'1.4',text:'Existe excesso de matéria-prima em processo?'},
+    {id:'s1q5',senso:1,num:'1.5',text:'Itens obsoletos foram identificados?'},
+    // Seiton
+    {id:'s2q1',senso:2,num:'2.1',text:'Ferramentas possuem local identificado?'},
+    {id:'s2q2',senso:2,num:'2.2',text:'Existe identificação visual nas áreas?'},
+    {id:'s2q3',senso:2,num:'2.3',text:'Matérias-primas estão organizadas?'},
+    {id:'s2q4',senso:2,num:'2.4',text:'Corredores e passagens estão livres?'},
+    {id:'s2q5',senso:2,num:'2.5',text:'Existe endereçamento visual?'},
+    // Seiso
+    {id:'s3q1',senso:3,num:'3.1',text:'Máquinas estão limpas?'},
+    {id:'s3q2',senso:3,num:'3.2',text:'Há vazamentos de óleo/resina?'},
+    {id:'s3q3',senso:3,num:'3.3',text:'O piso está limpo?'},
+    {id:'s3q4',senso:3,num:'3.4',text:'Existem resíduos acumulados?'},
+    {id:'s3q5',senso:3,num:'3.5',text:'Há rotina de limpeza definida?'},
+    // Seiketsu
+    {id:'s4q1',senso:4,num:'4.1',text:'Existe quadro de gestão à vista e o mesmo está atualizado?'},
+    {id:'s4q2',senso:4,num:'4.2',text:'POPs estão disponíveis?'},
+    {id:'s4q3',senso:4,num:'4.3',text:'Áreas estão demarcadas?'},
+    {id:'s4q4',senso:4,num:'4.4',text:'Existe checklist de rotina?'},
+    {id:'s4q5',senso:4,num:'4.5',text:'Auditorias 5S são realizadas?'},
+    // Shitsuke
+    {id:'s5q1',senso:5,num:'5.1',text:'Equipe segue os padrões?'},
+    {id:'s5q2',senso:5,num:'5.2',text:'Operadores utilizam EPIs corretamente?'},
+    {id:'s5q3',senso:5,num:'5.3',text:'Existe cultura de melhoria contínua?'},
+    {id:'s5q4',senso:5,num:'5.4',text:'Há participação da liderança?'},
+    {id:'s5q5',senso:5,num:'5.5',text:'Existe plano de ação para desvios?'},
+  ];
+}
+function getQuestoesAlmoxarifado() {
+  return [
+    {id:'s1q1',senso:1,num:'1.1',text:'Existem materiais obsoletos no estoque?'},
+    {id:'s1q2',senso:1,num:'1.2',text:'Há excesso de materiais sem giro?'},
+    {id:'s1q3',senso:1,num:'1.3',text:'Materiais vencidos foram segregados?'},
+    {id:'s1q4',senso:1,num:'1.4',text:'Existe sucata acumulada?'},
+    {id:'s1q5',senso:1,num:'1.5',text:'Itens sem identificação foram eliminados?'},
+    {id:'s2q1',senso:2,num:'2.1',text:'Estoque possui endereçamento?'},
+    {id:'s2q2',senso:2,num:'2.2',text:'Itens possuem identificação visual?'},
+    {id:'s2q3',senso:2,num:'2.3',text:'FIFO é respeitado?'},
+    {id:'s2q4',senso:2,num:'2.4',text:'Corredores estão livres?'},
+    {id:'s2q5',senso:2,num:'2.5',text:'Materiais estão organizados por categoria?'},
+    {id:'s3q1',senso:3,num:'3.1',text:'Área está limpa?'},
+    {id:'s3q2',senso:3,num:'3.2',text:'Existem pallets danificados?'},
+    {id:'s3q3',senso:3,num:'3.3',text:'Há resíduos espalhados?'},
+    {id:'s3q4',senso:3,num:'3.4',text:'Existe rotina de limpeza?'},
+    {id:'s3q5',senso:3,num:'3.5',text:'Iluminação é adequada?'},
+    {id:'s4q1',senso:4,num:'4.1',text:'Existe quadro de gestão à vista e o mesmo está atualizado?'},
+    {id:'s4q2',senso:4,num:'4.2',text:'Etiquetas seguem padrão?'},
+    {id:'s4q3',senso:4,num:'4.3',text:'Inventários cíclicos são realizados?'},
+    {id:'s4q4',senso:4,num:'4.4',text:'Há controle de divergências?'},
+    {id:'s4q5',senso:4,num:'4.5',text:'Auditorias são realizadas periodicamente?'},
+    {id:'s5q1',senso:5,num:'5.1',text:'Equipe segue procedimentos?'},
+    {id:'s5q2',senso:5,num:'5.2',text:'Operadores mantêm organização?'},
+    {id:'s5q3',senso:5,num:'5.3',text:'Existe gestão visual ativa?'},
+    {id:'s5q4',senso:5,num:'5.4',text:'Há acompanhamento da liderança?'},
+    {id:'s5q5',senso:5,num:'5.5',text:'Existe cultura de disciplina operacional?'},
+  ];
+}
+
+// ===================== SCORE CALC =====================
+function calcularScores(itens) {
+  const sensos = {};
+  for (let s=1;s<=5;s++) sensos[s] = itens.filter(i=>i.senso===s);
+  const scores = {};
+  const keys = ['seiri','seiton','seiso','seiketsu','shitsuke'];
+  keys.forEach((k,i)=>{
+    const g = sensos[i+1];
+    const soma = g.reduce((a,b)=>a+(b.nota||0),0);
+    scores[k] = g.length ? Math.round((soma/(g.length*5))*100) : 0;
+  });
+  scores.geral = Math.round(Object.values(scores).filter((_,i)=>i<5).reduce((a,b)=>a+b,0)/5);
+  scores.classificacao = getClassificacao(scores.geral).label;
+  return scores;
+}
+
+// ===================== AUDITORIA STATE =====================
+let auditoriaForm = {
+  empresa:'', unidade:'', auditor:'', tipo:'', area:'', dataHora:'', obs:'',
+  respostas:{}, observacoes:{}, planoAcao:{}
+};
+
+function resetAuditoriaForm() {
+  const now = new Date();
+  const local = new Date(now.getTime() - now.getTimezoneOffset()*60000).toISOString().slice(0,16);
+  auditoriaForm = {empresa:'',unidade:'',auditor:'',tipo:'',area:'',dataHora:local,obs:'',respostas:{},observacoes:{},planoAcao:{}};
+}
+
+// ==================== DASHBOARD ====================
+function renderDashboard() {
+  const aud = DATABASE.auditorias;
+  if (aud.length === 0) {
+    document.getElementById('content').innerHTML = `
+    <div class="empty-state">
+      <div class="icon">📋</div>
+      <h3>Bem-vindo ao Sistema de Auditoria 5S</h3>
+      <p>Nenhuma auditoria realizada ainda. Comece cadastrando empresas, unidades e auditores.</p>
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+        <button class="btn btn-outline" onclick="navigate('cadastros')">⚙️ Ir para Cadastros</button>
+        <button class="btn btn-primary" onclick="navigate('nova-auditoria')">+ Nova Auditoria</button>
+      </div>
+    </div>`;
+    return;
+  }
+  const totalAud = aud.length;
+  const mediaGeral = aud.length ? Math.round(aud.reduce((a,b)=>a+(b.scores?.geral||0),0)/aud.length) : 0;
+  const totalEmpresas = DATABASE.empresas.length;
+  let criticos = 0;
+  aud.forEach(a=>{
+    if (a.itens) a.itens.forEach(i=>{if((i.nota||0)<=2 && !a.planoAcao?.[i.id]?.when) criticos++;});
+  });
+  const cl = getClassificacao(mediaGeral);
+  const ultimas5 = [...aud].sort((a,b)=>new Date(b.dataHora)-new Date(a.dataHora)).slice(0,5);
+  // por área
+  const areas = ['Produção','Manutenção','Logística','Almoxarifado'];
+  const mediaArea = areas.map(ar=>{
+    const g = aud.filter(a=>a.area===ar);
+    return g.length ? Math.round(g.reduce((s,a)=>s+(a.scores?.geral||0),0)/g.length) : null;
+  });
+  // últimos 30 dias
+  const dias30 = [];
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+  for (let i=29;i>=0;i--) {
+    const d = new Date(hoje); d.setDate(d.getDate()-i);
+    const dStr = d.toISOString().slice(0,10);
+    const g = aud.filter(a=>a.dataHora&&a.dataHora.slice(0,10)===dStr);
+    if (g.length) dias30.push({d:d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}),v:Math.round(g.reduce((s,a)=>s+(a.scores?.geral||0),0)/g.length)});
+  }
+
+  document.getElementById('content').innerHTML = `
+  <div class="grid-4" style="margin-bottom:24px">
+    <div class="summary-card"><div class="icon" style="background:#eff6ff">📋</div><div class="info"><div class="label">Total de Auditorias</div><div class="value">${totalAud}</div></div></div>
+    <div class="summary-card"><div class="icon" style="background:#f0fdf4">📊</div><div class="info"><div class="label">Média Geral</div><div class="value" style="color:${getScoreColor(mediaGeral)}">${mediaGeral}%</div></div></div>
+    <div class="summary-card"><div class="icon" style="background:#fef9c3">🏢</div><div class="info"><div class="label">Empresas</div><div class="value">${totalEmpresas}</div></div></div>
+    <div class="summary-card"><div class="icon" style="background:#fee2e2">⚠️</div><div class="info"><div class="label">Itens Críticos</div><div class="value" style="color:#dc2626">${criticos}</div></div></div>
+  </div>
+  <div class="grid-2" style="margin-bottom:24px">
+    <div class="card">
+      <div class="card-header"><span class="card-title">Média por Área</span></div>
+      <canvas id="chart-areas" height="200"></canvas>
+    </div>
+    <div class="card">
+      <div class="card-header"><span class="card-title">Evolução (últimos 30 dias)</span></div>
+      <canvas id="chart-linha" height="200"></canvas>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header"><span class="card-title">Últimas Auditorias</span><button class="btn btn-outline btn-sm" onclick="navigate('historico')">Ver todas</button></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Data</th><th>Empresa</th><th>Área</th><th>Auditor</th><th>Score</th><th>Classificação</th></tr></thead>
+        <tbody>${ultimas5.map(a=>{const cl2=getClassificacao(a.scores?.geral||0);return`<tr>
+          <td>${formatDateShort(a.dataHora)}</td>
+          <td>${escHtml(a.empresaNome||'—')}</td>
+          <td>${escHtml(a.area||'—')}</td>
+          <td>${escHtml(a.auditorNome||'—')}</td>
+          <td><b style="color:${getScoreColor(a.scores?.geral||0)}">${a.scores?.geral||0}%</b></td>
+          <td><span class="badge ${cl2.cls}">${cl2.label}</span></td>
+        </tr>`}).join('')}</tbody>
+      </table>
+    </div>
+  </div>`;
+  setTimeout(()=>{
+    drawBarChart('chart-areas', areas, mediaArea.map(v=>v===null?0:v), areas.map((_,i)=>['#3b82f6','#22c55e','#f97316','#8b5cf6'][i]));
+    if (dias30.length>0) drawLineChart('chart-linha', dias30.map(d=>d.d), dias30.map(d=>d.v));
+  },50);
+}
+
+// ==================== CANVAS CHARTS ====================
+function drawBarChart(id, labels, values, colors) {
+  const canvas = document.getElementById(id);
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.offsetWidth||400;
+  canvas.width = W;
+  const H = canvas.height||200;
+  ctx.clearRect(0,0,W,H);
+  const pad = {t:20,r:20,b:40,l:50};
+  const cW=W-pad.l-pad.r, cH=H-pad.t-pad.b;
+  const max = 100;
+  // grid
+  ctx.strokeStyle='#e2e8f0'; ctx.lineWidth=1;
+  for(let i=0;i<=4;i++){
+    const y=pad.t+cH-(i/4)*cH;
+    ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(pad.l+cW,y);ctx.stroke();
+    ctx.fillStyle='#94a3b8';ctx.font='11px system-ui';ctx.textAlign='right';
+    ctx.fillText((i*25)+'%',pad.l-6,y+4);
+  }
+  const bw=Math.min(cW/labels.length*0.6,60);
+  labels.forEach((lbl,i)=>{
+    const x=pad.l+((i+0.5)/labels.length)*cW-bw/2;
+    const h=values[i]?((values[i]/max)*cH):0;
+    const y=pad.t+cH-h;
+    ctx.fillStyle=colors[i]||'#3b82f6';
+    ctx.beginPath();
+    if(h>0){ctx.roundRect?ctx.roundRect(x,y,bw,h,4):ctx.rect(x,y,bw,h);}
+    ctx.fill();
+    ctx.fillStyle='#64748b';ctx.font='11px system-ui';ctx.textAlign='center';
+    ctx.fillText(lbl,x+bw/2,pad.t+cH+16);
+    if(values[i]){
+      ctx.fillStyle='#1e293b';ctx.font='bold 12px system-ui';
+      ctx.fillText(values[i]+'%',x+bw/2,y-5);
+    }
+  });
+}
+function drawLineChart(id, labels, values) {
+  const canvas = document.getElementById(id);
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.offsetWidth||400;
+  canvas.width = W;
+  const H = canvas.height||200;
+  ctx.clearRect(0,0,W,H);
+  if (values.length<2) {
+    ctx.fillStyle='#94a3b8';ctx.font='14px system-ui';ctx.textAlign='center';
+    ctx.fillText('Dados insuficientes',W/2,H/2);return;
+  }
+  const pad={t:20,r:20,b:40,l:50};
+  const cW=W-pad.l-pad.r, cH=H-pad.t-pad.b;
+  const max=100;
+  ctx.strokeStyle='#e2e8f0';ctx.lineWidth=1;
+  for(let i=0;i<=4;i++){
+    const y=pad.t+cH-(i/4)*cH;
+    ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(pad.l+cW,y);ctx.stroke();
+    ctx.fillStyle='#94a3b8';ctx.font='11px system-ui';ctx.textAlign='right';
+    ctx.fillText((i*25)+'%',pad.l-6,y+4);
+  }
+  const step=cW/(values.length-1);
+  // fill
+  ctx.beginPath();
+  ctx.moveTo(pad.l,pad.t+cH-((values[0]/max)*cH));
+  values.forEach((v,i)=>ctx.lineTo(pad.l+i*step,pad.t+cH-((v/max)*cH)));
+  ctx.lineTo(pad.l+(values.length-1)*step,pad.t+cH);
+  ctx.lineTo(pad.l,pad.t+cH);
+  ctx.closePath();
+  ctx.fillStyle='rgba(59,130,246,0.1)';ctx.fill();
+  // line
+  ctx.beginPath();ctx.strokeStyle='#3b82f6';ctx.lineWidth=2;
+  values.forEach((v,i)=>{
+    const x=pad.l+i*step, y=pad.t+cH-((v/max)*cH);
+    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  });
+  ctx.stroke();
+  // dots
+  values.forEach((v,i)=>{
+    const x=pad.l+i*step, y=pad.t+cH-((v/max)*cH);
+    ctx.beginPath();ctx.arc(x,y,4,0,Math.PI*2);
+    ctx.fillStyle='#3b82f6';ctx.fill();
+  });
+  // labels
+  const step2=Math.max(1,Math.floor(labels.length/5));
+  labels.forEach((l,i)=>{
+    if(i%step2===0||i===labels.length-1){
+      ctx.fillStyle='#94a3b8';ctx.font='10px system-ui';ctx.textAlign='center';
+      ctx.fillText(l,pad.l+i*step,pad.t+cH+16);
+    }
+  });
+}
+function drawRadarChart(id, values, labels) {
+  const canvas = document.getElementById(id);
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.offsetWidth||300;
+  canvas.width = W;
+  const H = W;
+  canvas.height = H;
+  ctx.clearRect(0,0,W,H);
+  const cx=W/2, cy=H/2, r=Math.min(W,H)/2-50;
+  const n=5;
+  const angles=Array.from({length:n},(_,i)=>(i*2*Math.PI/n)-Math.PI/2);
+  // grid
+  [0.25,0.5,0.75,1].forEach(pct=>{
+    ctx.beginPath();ctx.strokeStyle='#e2e8f0';ctx.lineWidth=1;
+    angles.forEach((a,i)=>{
+      const x=cx+r*pct*Math.cos(a), y=cy+r*pct*Math.sin(a);
+      i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+    });
+    ctx.closePath();ctx.stroke();
+  });
+  // spokes
+  angles.forEach(a=>{
+    ctx.beginPath();ctx.strokeStyle='#e2e8f0';ctx.lineWidth=1;
+    ctx.moveTo(cx,cy);ctx.lineTo(cx+r*Math.cos(a),cy+r*Math.sin(a));ctx.stroke();
+  });
+  // data
+  ctx.beginPath();ctx.fillStyle='rgba(59,130,246,0.25)';ctx.strokeStyle='#3b82f6';ctx.lineWidth=2;
+  values.forEach((v,i)=>{
+    const pct=(v||0)/100;
+    const x=cx+r*pct*Math.cos(angles[i]), y=cy+r*pct*Math.sin(angles[i]);
+    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  });
+  ctx.closePath();ctx.fill();ctx.stroke();
+  // labels
+  labels.forEach((l,i)=>{
+    const x=cx+(r+22)*Math.cos(angles[i]), y=cy+(r+22)*Math.sin(angles[i]);
+    ctx.fillStyle='#1e293b';ctx.font='bold 12px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(l,x,y);
+  });
+  // values
+  values.forEach((v,i)=>{
+    const pct=(v||0)/100;
+    const x=cx+r*pct*Math.cos(angles[i])+Math.cos(angles[i])*14;
+    const y=cy+r*pct*Math.sin(angles[i])+Math.sin(angles[i])*14;
+    ctx.fillStyle='#3b82f6';ctx.font='bold 11px system-ui';
+    ctx.fillText(v+'%',x,y);
+  });
+}
+function drawGauge(id, score) {
+  const canvas = document.getElementById(id);
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.offsetWidth||300;
+  canvas.width = W;
+  canvas.height = W*0.6;
+  const H = canvas.height;
+  ctx.clearRect(0,0,W,H);
+  const cx=W/2, cy=H-20, r=Math.min(W,H)*0.85;
+  const startA=Math.PI, endA=0;
+  // arc bg
+  const segs=[['#dc2626',0,.5],['#f97316',.5,.7],['#eab308',.7,.85],['#22c55e',.85,.93],['#3b82f6',.93,1]];
+  segs.forEach(([color,from,to])=>{
+    const a1=Math.PI*(1-from), a2=Math.PI*(1-to);
+    ctx.beginPath();ctx.strokeStyle=color;ctx.lineWidth=18;
+    ctx.arc(cx,cy,r/2,Math.PI-a1+0.02,Math.PI-a2-0.02);ctx.stroke();
+  });
+  // needle
+  const angle=Math.PI*(1-score/100);
+  const nx=cx+r/2*Math.cos(Math.PI+angle);
+  const ny=cy+r/2*Math.sin(Math.PI+angle);
+  ctx.beginPath();ctx.strokeStyle='#1e293b';ctx.lineWidth=3;
+  ctx.moveTo(cx,cy);ctx.lineTo(nx,ny);ctx.stroke();
+  ctx.beginPath();ctx.fillStyle='#1e293b';
+  ctx.arc(cx,cy,7,0,Math.PI*2);ctx.fill();
+  // labels
+  ['0','25','50','75','100'].forEach((l,i)=>{
+    const a=Math.PI*(1-i*25/100);
+    const lx=cx+(r/2+22)*Math.cos(Math.PI+a);
+    const ly=cy+(r/2+22)*Math.sin(Math.PI+a);
+    ctx.fillStyle='#94a3b8';ctx.font='10px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(l+'%',lx,ly);
+  });
+}
+
+// ==================== NOVA AUDITORIA ====================
+function renderNovaAuditoria() {
+  if (!auditoriaForm.dataHora) resetAuditoriaForm();
+  const empresaOpts = DATABASE.empresas.map(e=>`<option value="${e.id}" ${auditoriaForm.empresa===e.id?'selected':''}>${escHtml(e.nome)}</option>`).join('');
+  const unidadesFiltered = auditoriaForm.empresa ? DATABASE.unidades.filter(u=>u.empresaId===auditoriaForm.empresa) : DATABASE.unidades;
+  const unidadeOpts = unidadesFiltered.map(u=>`<option value="${u.id}" ${auditoriaForm.unidade===u.id?'selected':''}>${escHtml(u.nome)}</option>`).join('');
+  const auditorOpts = DATABASE.auditores.map(a=>`<option value="${a.id}" ${auditoriaForm.auditor===a.id?'selected':''}>${escHtml(a.nome)}</option>`).join('');
+  const tiposOpts = ['Gemba Diário','Gemba Semanal','Auditoria Mensal'].map(t=>`<option value="${t}" ${auditoriaForm.tipo===t?'selected':''}>${t}</option>`).join('');
+  const areasOpts = ['Produção','Manutenção','Logística','Almoxarifado'].map(a=>`<option value="${a}" ${auditoriaForm.area===a?'selected':''}>${a}</option>`).join('');
+
+  let questHTML = '';
+  if (auditoriaForm.area) {
+    const areaKey = auditoriaForm.area.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+    const qKey = ['producao','manutencao','logistica'].includes(areaKey) ? 'producao' : 'almoxarifado';
+    const questoes = QUESTOES[qKey];
+    const respostas = auditoriaForm.respostas;
+    const avaliados = Object.keys(respostas).length;
+    const total = questoes.length;
+    const pct = Math.round((avaliados/total)*100);
+    // senso scores em tempo real
+    const sensoScores = SENSO_SHORT.map((s,si)=>{
+      const g = questoes.filter(q=>q.senso===si+1);
+      const respondidos = g.filter(q=>respostas[q.id]);
+      if (!respondidos.length) return null;
+      return Math.round(respondidos.reduce((a,q)=>a+(respostas[q.id]||0),0)/(g.length*5)*100);
+    });
+    questHTML = `
+    <div style="margin-bottom:20px">
+      <div class="progress-header"><span>Progresso: <b>${avaliados} de ${total}</b> itens avaliados</span><span><b>${pct}%</b></span></div>
+      <div class="progress-bar-wrap"><div class="progress-bar" style="width:${pct}%;background:${getScoreColor(pct)}"></div></div>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px">
+      ${SENSO_SHORT.map((s,i)=>`<div style="flex:1;min-width:100px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center">
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px">${s}</div>
+        <div style="font-size:18px;font-weight:700;color:${sensoScores[i]!==null?getScoreColor(sensoScores[i]):'var(--text-muted)'}">${sensoScores[i]!==null?sensoScores[i]+'%':'—'}</div>
+      </div>`).join('')}
+    </div>
+    ${[1,2,3,4,5].map(s=>{
+      const sq = questoes.filter(q=>q.senso===s);
+      const resp = sq.filter(q=>respostas[q.id]);
+      const sc = resp.length?Math.round(resp.reduce((a,q)=>a+(respostas[q.id]||0),0)/(sq.length*5)*100):null;
+      return `<div class="senso-card">
+        <div class="senso-header" onclick="toggleSenso(${s})">
+          <span class="senso-title">
+            <span style="width:24px;height:24px;border-radius:50%;background:var(--color-primary);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700">${s}</span>
+            ${SENSO_NAMES[s-1]}
+          </span>
+          <div style="display:flex;align-items:center;gap:8px">
+            ${sc!==null?`<span class="badge" style="background:${getScoreColor(sc)}22;color:${getScoreColor(sc)}">${sc}%</span>`:''}
+            <svg class="arrow${s===1?' open':''}" id="arrow-${s}" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+        </div>
+        <div class="senso-body${s===1?' open':''}" id="senso-body-${s}">
+          ${sq.map(q=>{
+            const nota = respostas[q.id]||0;
+            const isCrit = nota>0&&nota<=2;
+            return `<div class="item-row${isCrit?' critico':''}" id="item-row-${q.id}">
+              <div class="item-header">
+                <span class="item-num">${q.num}</span>
+                <span class="item-text">${escHtml(q.text)}</span>
+                <button class="obs-toggle" onclick="toggleObs('${q.id}')">+ obs.</button>
+              </div>
+              <div class="nota-btns">
+                ${[1,2,3,4,5].map(n=>`<button class="nota-btn${nota===n?' selected':''}" data-nota="${n}" onclick="setNota('${q.id}',${n},${s},'${qKey}')">${n===1?'1 🔴':n===2?'2 🟠':n===3?'3 🟡':n===4?'4 🟢':'5 🔵'}</button>`).join('')}
+              </div>
+              <div class="obs-field${auditoriaForm.observacoes[q.id]?' open':''}" id="obs-${q.id}">
+                <textarea class="form-control" rows="2" placeholder="Observação sobre este item..." onchange="setObs('${q.id}',this.value)" style="margin-top:8px">${escHtml(auditoriaForm.observacoes[q.id]||'')}</textarea>
+              </div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>`;
+    }).join('')}`;
+    // 5W2H section for critical items
+    const criticos = questoes.filter(q=>respostas[q.id]&&respostas[q.id]<=2);
+    if (criticos.length) {
+      questHTML += `<div style="margin-top:24px">
+        <h3 style="margin-bottom:16px;font-size:16px">Plano de Ação 5W2H — Itens Críticos (${criticos.length})</h3>
+        ${criticos.map(q=>{
+          const pa = auditoriaForm.planoAcao[q.id]||{};
+          const notaColor = getScoreColor(respostas[q.id]);
+          return `<div class="action-card">
+            <div class="action-card-header">
+              <span class="badge" style="background:${notaColor}22;color:${notaColor}">${respostas[q.id]}</span>
+              <span style="font-size:14px;font-weight:600">${q.num} — ${escHtml(q.text)}</span>
+            </div>
+            <div class="action-card-body">
+              <div class="form-grid-7">
+                <div class="form-group"><label class="form-label">O quê (What)</label><input class="form-control" value="${escHtml(pa.what||q.text)}" onchange="setPA('${q.id}','what',this.value)" placeholder="Ação a ser realizada"></div>
+                <div class="form-group"><label class="form-label">Por quê (Why)</label><textarea class="form-control" rows="2" onchange="setPA('${q.id}','why',this.value)" placeholder="Motivo">${escHtml(pa.why||'')}</textarea></div>
+                <div class="form-group"><label class="form-label">Onde (Where)</label><input class="form-control" value="${escHtml(pa.where||'')}" onchange="setPA('${q.id}','where',this.value)" placeholder="Local"></div>
+                <div class="form-group"><label class="form-label">Quando (When)</label><input type="date" class="form-control" value="${escHtml(pa.when||'')}" onchange="setPA('${q.id}','when',this.value)"></div>
+                <div class="form-group"><label class="form-label">Quem (Who)</label><input class="form-control" value="${escHtml(pa.who||'')}" onchange="setPA('${q.id}','who',this.value)" placeholder="Responsável"></div>
+                <div class="form-group"><label class="form-label">Como (How)</label><textarea class="form-control" rows="2" onchange="setPA('${q.id}','how',this.value)" placeholder="Como será feito">${escHtml(pa.how||'')}</textarea></div>
+                <div class="form-group"><label class="form-label">Custo (How Much)</label><div style="display:flex;align-items:center;gap:6px"><span style="font-size:14px;color:var(--text-muted)">R$</span><input type="number" class="form-control" value="${escHtml(pa.cost||'')}" onchange="setPA('${q.id}','cost',this.value)" placeholder="0,00"></div></div>
+              </div>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>`;
+    }
+  }
+
+  document.getElementById('content').innerHTML = `
+  <div class="banner no-print">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12" y2="16" stroke-width="3"/></svg>
+    <span>Preencha os dados de identificação e selecione a área para carregar o questionário.</span>
+  </div>
+  <div class="card" style="margin-bottom:20px">
+    <div class="card-header"><span class="card-title">Identificação da Auditoria</span></div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Empresa auditada *</label>
+        <select class="form-control" onchange="setAudForm('empresa',this.value);setAudForm('unidade','');renderNovaAuditoria()">
+          <option value="">Selecione...</option>${empresaOpts}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Unidade auditada *</label>
+        <select class="form-control" onchange="setAudForm('unidade',this.value);renderNovaAuditoria()">
+          <option value="">Selecione...</option>${unidadeOpts}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Auditor responsável *</label>
+        <select class="form-control" onchange="setAudForm('auditor',this.value)">
+          <option value="">Selecione...</option>${auditorOpts}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Tipo de auditoria *</label>
+        <select class="form-control" onchange="setAudForm('tipo',this.value)">
+          <option value="">Selecione...</option>${tiposOpts}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Área auditada *</label>
+        <select class="form-control" onchange="setAudForm('area',this.value);renderNovaAuditoria()">
+          <option value="">Selecione...</option>${areasOpts}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Data e hora</label>
+        <input type="datetime-local" class="form-control" value="${auditoriaForm.dataHora}" onchange="setAudForm('dataHora',this.value)">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Observações gerais</label>
+      <textarea class="form-control" rows="2" onchange="setAudForm('obs',this.value)" placeholder="Contexto geral da auditoria...">${escHtml(auditoriaForm.obs)}</textarea>
+    </div>
+  </div>
+  ${auditoriaForm.area ? `
+  <div id="questionario-section">${questHTML}</div>
+  <div style="margin-top:24px;display:flex;justify-content:flex-end;gap:12px">
+    <button class="btn btn-outline" onclick="if(confirm('Descartar auditoria em andamento?')){resetAuditoriaForm();navigate('dashboard')}">Cancelar</button>
+    <button class="btn btn-primary" onclick="salvarAuditoria()" style="font-size:15px;padding:10px 28px">💾 Salvar Auditoria</button>
+  </div>
+  ` : '<div class="empty-state" style="padding:40px"><div class="icon" style="font-size:36px">📋</div><p>Selecione a área auditada para carregar o questionário 5S.</p></div>'}`;
+}
+
+function setAudForm(field, val) {
+  auditoriaForm[field] = val;
+}
+function setNota(qId, nota, senso, areaKey) {
+  auditoriaForm.respostas[qId] = nota;
+  renderNovaAuditoria();
+}
+function setObs(qId, val) {
+  auditoriaForm.observacoes[qId] = val;
+}
+function setPA(qId, field, val) {
+  if (!auditoriaForm.planoAcao[qId]) auditoriaForm.planoAcao[qId] = {};
+  auditoriaForm.planoAcao[qId][field] = val;
+}
+function toggleSenso(s) {
+  const body = document.getElementById('senso-body-'+s);
+  const arrow = document.getElementById('arrow-'+s);
+  body.classList.toggle('open');
+  arrow.classList.toggle('open');
+}
+function toggleObs(qId) {
+  const el = document.getElementById('obs-'+qId);
+  if (el) el.classList.toggle('open');
+}
+
+function salvarAuditoria() {
+  const f = auditoriaForm;
+  if (!f.empresa||!f.unidade||!f.auditor||!f.tipo||!f.area) {
+    showToast('Preencha todos os campos obrigatórios de identificação.','danger');return;
+  }
+  const areaKey = f.area.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+  const qKey = ['producao','manutencao','logistica'].includes(areaKey)?'producao':'almoxarifado';
+  const questoes = QUESTOES[qKey];
+  const pendentes = questoes.filter(q=>!f.respostas[q.id]);
+  if (pendentes.length>0) {
+    showToast(`Avalie todos os ${questoes.length} itens antes de salvar. Faltam ${pendentes.length} itens.`,'danger');return;
+  }
+  const empresa = DATABASE.empresas.find(e=>e.id===f.empresa);
+  const unidade = DATABASE.unidades.find(u=>u.id===f.unidade);
+  const auditor = DATABASE.auditores.find(a=>a.id===f.auditor);
+  const itens = questoes.map(q=>({...q, nota:f.respostas[q.id]||0, obs:f.observacoes[q.id]||''}));
+  const scores = calcularScores(itens);
+  const auditoria = {
+    id: generateId(),
+    empresa: f.empresa, empresaNome: empresa?.nome||'',
+    unidade: f.unidade, unidadeNome: unidade?.nome||'',
+    auditor: f.auditor, auditorNome: auditor?.nome||'',
+    tipo: f.tipo, area: f.area,
+    dataHora: f.dataHora||new Date().toISOString(),
+    obs: f.obs,
+    itens, scores,
+    planoAcao: f.planoAcao
+  };
+  DATABASE.auditorias.push(auditoria);
+  currentAuditoriaId = auditoria.id;
+  resetAuditoriaForm();
+  saveDatabase();
+  navigate('relatorio', auditoria.id);
+}
+
+// ==================== RELATÓRIO ====================
+function renderRelatorio(audId) {
+  const aud = DATABASE.auditorias.find(a=>a.id===audId);
+  if (!aud) { document.getElementById('content').innerHTML = '<div class="empty-state"><div class="icon">❌</div><h3>Auditoria não encontrada</h3></div>'; return; }
+  const scores = aud.scores||{};
+  const cl = getClassificacao(scores.geral||0);
+  const itens = aud.itens||[];
+  const sensoKeys = ['seiri','seiton','seiso','seiketsu','shitsuke'];
+  const radarVals = sensoKeys.map(k=>scores[k]||0);
+  // histórico
+  const hist = DATABASE.auditorias.filter(a=>a.empresa===aud.empresa&&a.area===aud.area&&a.id!==aud.id).sort((a,b)=>new Date(a.dataHora)-new Date(b.dataHora)).slice(-5);
+  const histLabels = [...hist.map(a=>formatDateShort(a.dataHora)),formatDateShort(aud.dataHora)];
+  const histVals = [...hist.map(a=>a.scores?.geral||0),scores.geral||0];
+  // plano ação
+  const criticos = itens.filter(i=>i.nota<=2);
+  document.getElementById('content').innerHTML = `
+  <div class="no-print" style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap">
+    <button class="btn btn-outline" onclick="navigate('historico')">← Voltar</button>
+    <button class="btn btn-primary" onclick="window.print()">🖨️ Imprimir / PDF</button>
+    <button class="btn btn-outline" onclick="navigate('nova-auditoria')">+ Nova Auditoria</button>
+  </div>
+  <div class="banner no-print">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+    <span>Arquivo atualizado foi baixado. Lembre-se de substituir o arquivo anterior no Drive pela versão nova.</span>
+  </div>
+  <div class="report-header">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:16px">
+      <div>
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+          <div style="width:52px;height:52px;background:rgba(255,255,255,.2);border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px">5S</div>
+          <div>
+            <div class="report-company">${escHtml(aud.empresaNome)}</div>
+            <div style="opacity:.8;font-size:15px">${escHtml(aud.unidadeNome)}</div>
+          </div>
+        </div>
+        <div class="report-meta">
+          <b>Área:</b> ${escHtml(aud.area)} &nbsp;|&nbsp; <b>Tipo:</b> ${escHtml(aud.tipo)}<br>
+          <b>Data:</b> ${formatDate(aud.dataHora)}<br>
+          <b>Auditor:</b> ${escHtml(aud.auditorNome)}
+          ${aud.obs?`<br><b>Obs:</b> ${escHtml(aud.obs)}`:''}
+        </div>
+      </div>
+      <div style="text-align:center">
+        <div class="report-score-big">${scores.geral||0}%</div>
+        <div style="font-size:16px;font-weight:600;margin-top:4px">${cl.label}</div>
+        <div style="font-size:12px;opacity:.7;margin-top:4px">Score Geral</div>
+      </div>
+    </div>
+    <div class="senso-scores" style="margin-top:20px">
+      ${sensoKeys.map((k,i)=>`<div class="senso-score-row">
+        <span class="name" style="color:rgba(255,255,255,.9)">${SENSO_SHORT[i]}</span>
+        <div class="bar-wrap" style="background:rgba(255,255,255,.2)"><div class="bar" style="width:${scores[k]||0}%;background:rgba(255,255,255,.8)"></div></div>
+        <span class="pct" style="color:#fff">${scores[k]||0}%</span>
+      </div>`).join('')}
+    </div>
+  </div>
+  <div class="grid-2" style="margin-bottom:24px">
+    <div class="card"><div class="card-header"><span class="card-title">Radar 5S</span></div><canvas id="chart-radar" style="width:100%"></canvas></div>
+    <div class="card"><div class="card-header"><span class="card-title">Gauge — Score Geral</span></div><div class="gauge-wrap"><canvas id="chart-gauge" style="width:100%"></canvas><div class="gauge-score" style="color:${getScoreColor(scores.geral||0)}">${scores.geral||0}%</div><div class="gauge-label">${cl.label}</div></div></div>
+  </div>
+  <div class="grid-2" style="margin-bottom:24px">
+    <div class="card"><div class="card-header"><span class="card-title">Score por Senso</span></div><canvas id="chart-sensos" height="200"></canvas></div>
+    <div class="card"><div class="card-header"><span class="card-title">Evolução Histórica</span></div><canvas id="chart-hist" height="200"></canvas></div>
+  </div>
+  ${[1,2,3,4,5].map(s=>{
+    const sq = itens.filter(i=>i.senso===s);
+    return `<div class="card page-break" style="margin-bottom:16px">
+      <div class="card-header"><span class="card-title">${SENSO_NAMES[s-1]}</span><span class="badge" style="background:${getScoreColor(scores[sensoKeys[s-1]]||0)}22;color:${getScoreColor(scores[sensoKeys[s-1]]||0)}">${scores[sensoKeys[s-1]]||0}%</span></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Item</th><th>Descrição</th><th>Nota</th><th>Observação</th></tr></thead>
+          <tbody>${sq.map(i=>{
+            const notaColors=['','var(--nota-1)','var(--nota-2)','var(--nota-3)','var(--nota-4)','var(--nota-5)'];
+            const notaLabels=['','Crítico','Baixo','Parcial','Adequado','Excelência'];
+            return `<tr style="${i.nota<=2?'background:#fff5f5':''}">
+              <td><b>${i.num}</b></td>
+              <td>${escHtml(i.text)}</td>
+              <td><span class="badge" style="background:${notaColors[i.nota]||'#ccc'}22;color:${notaColors[i.nota]||'#888'}">${i.nota} — ${notaLabels[i.nota]||''}</span></td>
+              <td style="font-size:13px;color:var(--text-muted)">${escHtml(i.obs||'—')}</td>
+            </tr>`;
+          }).join('')}</tbody>
+        </table>
+      </div>
+    </div>`;
+  }).join('')}
+  ${criticos.length ? `
+  <div class="card page-break" style="margin-bottom:16px">
+    <div class="card-header"><span class="card-title">Plano de Ação 5W2H</span><span class="badge badge-danger">${criticos.length} itens críticos</span></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Item</th><th>O quê</th><th>Por quê</th><th>Onde</th><th>Quando</th><th>Quem</th><th>Como</th><th>Custo</th></tr></thead>
+        <tbody>${criticos.map(i=>{const pa=(aud.planoAcao||{})[i.id]||{};return`<tr>
+          <td><b>${i.num}</b></td>
+          <td>${escHtml(pa.what||i.text)}</td>
+          <td>${escHtml(pa.why||'—')}</td>
+          <td>${escHtml(pa.where||'—')}</td>
+          <td>${pa.when?formatDateShort(pa.when):'—'}</td>
+          <td>${escHtml(pa.who||'—')}</td>
+          <td>${escHtml(pa.how||'—')}</td>
+          <td>${pa.cost?'R$ '+pa.cost:'—'}</td>
+        </tr>`}).join('')}</tbody>
+      </table>
+    </div>
+  </div>` : ''}
+  <div style="text-align:center;color:var(--text-muted);font-size:12px;padding:20px">
+    Gerado em ${formatDate(new Date().toISOString())} | Sistema de Auditoria 5S Lean | Metodologia RX Log
+  </div>`;
+  setTimeout(()=>{
+    drawRadarChart('chart-radar', radarVals, SENSO_SHORT);
+    drawGauge('chart-gauge', scores.geral||0);
+    drawBarChart('chart-sensos', SENSO_SHORT, radarVals, radarVals.map(v=>getScoreColor(v).replace('var(','').replace(')','').trim()));
+    if (histVals.length>1) drawLineChart('chart-hist', histLabels, histVals);
+    else {
+      const c=document.getElementById('chart-hist');
+      if(c){const ctx=c.getContext('2d');c.width=c.offsetWidth||300;c.height=200;ctx.fillStyle='#94a3b8';ctx.font='13px system-ui';ctx.textAlign='center';ctx.fillText('Primeira auditoria nesta área',c.width/2,100);}
+    }
+  },100);
+}
+
+function imprimirRelatorio() {
+  if (!currentAuditoriaId && DATABASE.auditorias.length > 0) {
+    currentAuditoriaId = [...DATABASE.auditorias].sort((a,b)=>new Date(b.dataHora)-new Date(a.dataHora))[0].id;
+  }
+  if (currentAuditoriaId) {
+    navigate('relatorio', currentAuditoriaId);
+    setTimeout(()=>window.print(), 300);
+  } else {
+    showToast('Nenhuma auditoria disponível para imprimir.','warning');
+  }
+}
+
+// ==================== HISTÓRICO ====================
+let histFiltros = {empresa:'',area:'',tipo:'',de:'',ate:''};
+
+function renderHistorico() {
+  const empresaOpts = DATABASE.empresas.map(e=>`<option value="${e.id}" ${histFiltros.empresa===e.id?'selected':''}>${escHtml(e.nome)}</option>`).join('');
+  const areasOpts = ['Produção','Manutenção','Logística','Almoxarifado'].map(a=>`<option value="${a}" ${histFiltros.area===a?'selected':''}>${a}</option>`).join('');
+  const tiposOpts = ['Gemba Diário','Gemba Semanal','Auditoria Mensal'].map(t=>`<option value="${t}" ${histFiltros.tipo===t?'selected':''}>${t}</option>`).join('');
+  let aud = [...DATABASE.auditorias].sort((a,b)=>new Date(b.dataHora)-new Date(a.dataHora));
+  if (histFiltros.empresa) aud = aud.filter(a=>a.empresa===histFiltros.empresa);
+  if (histFiltros.area) aud = aud.filter(a=>a.area===histFiltros.area);
+  if (histFiltros.tipo) aud = aud.filter(a=>a.tipo===histFiltros.tipo);
+  if (histFiltros.de) aud = aud.filter(a=>a.dataHora>=histFiltros.de);
+  if (histFiltros.ate) aud = aud.filter(a=>a.dataHora<=histFiltros.ate+'T23:59');
+  document.getElementById('content').innerHTML = `
+  <div class="filter-bar no-print">
+    <div class="form-group"><label class="form-label">Empresa</label>
+      <select class="form-control" onchange="histFiltros.empresa=this.value;renderHistorico()"><option value="">Todas</option>${empresaOpts}</select></div>
+    <div class="form-group"><label class="form-label">Área</label>
+      <select class="form-control" onchange="histFiltros.area=this.value;renderHistorico()"><option value="">Todas</option>${areasOpts}</select></div>
+    <div class="form-group"><label class="form-label">Tipo</label>
+      <select class="form-control" onchange="histFiltros.tipo=this.value;renderHistorico()"><option value="">Todos</option>${tiposOpts}</select></div>
+    <div class="form-group"><label class="form-label">De</label><input type="date" class="form-control" value="${histFiltros.de}" onchange="histFiltros.de=this.value;renderHistorico()"></div>
+    <div class="form-group"><label class="form-label">Até</label><input type="date" class="form-control" value="${histFiltros.ate}" onchange="histFiltros.ate=this.value;renderHistorico()"></div>
+    <button class="btn btn-outline" onclick="histFiltros={empresa:'',area:'',tipo:'',de:'',ate:''};renderHistorico()">Limpar</button>
+  </div>
+  ${aud.length === 0 ? `<div class="empty-state"><div class="icon">📋</div><h3>Nenhuma auditoria encontrada</h3><p>Tente ajustar os filtros ou realize uma nova auditoria.</p><button class="btn btn-primary" onclick="navigate('nova-auditoria')">+ Nova Auditoria</button></div>` : `
+  <div class="card">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Data/Hora</th><th>Empresa</th><th>Unidade</th><th>Área</th><th>Tipo</th><th>Auditor</th><th>Score</th><th>Classificação</th><th class="no-print">Ações</th></tr></thead>
+        <tbody>${aud.map((a,idx)=>{
+          const cl=getClassificacao(a.scores?.geral||0);
+          // tendência
+          const prev = aud.slice(idx+1).find(p=>p.empresa===a.empresa&&p.area===a.area);
+          let trend='';
+          if(prev){
+            const diff=(a.scores?.geral||0)-(prev.scores?.geral||0);
+            if(diff>0)trend='<span style="color:var(--color-success)">↑'+diff+'%</span>';
+            else if(diff<0)trend='<span style="color:var(--color-danger)">↓'+Math.abs(diff)+'%</span>';
+            else trend='<span style="color:var(--text-muted)">→</span>';
+          }
+          return`<tr>
+            <td style="white-space:nowrap">${formatDate(a.dataHora)}</td>
+            <td>${escHtml(a.empresaNome)}</td>
+            <td>${escHtml(a.unidadeNome)}</td>
+            <td>${escHtml(a.area)}</td>
+            <td>${escHtml(a.tipo)}</td>
+            <td>${escHtml(a.auditorNome)}</td>
+            <td><b style="color:${getScoreColor(a.scores?.geral||0)}">${a.scores?.geral||0}%</b> ${trend}</td>
+            <td><span class="badge ${cl.cls}">${cl.label}</span></td>
+            <td class="no-print" style="white-space:nowrap">
+              <button class="btn-icon" title="Ver relatório" onclick="navigate('relatorio','${a.id}')">👁️</button>
+              <button class="btn-icon" title="Excluir" onclick="excluirAuditoria('${a.id}')">🗑️</button>
+            </td>
+          </tr>`;
+        }).join('')}</tbody>
+      </table>
+    </div>
+  </div>`}`;
+}
+
+function excluirAuditoria(id) {
+  showModal(`<div class="modal"><div class="modal-header"><span class="modal-title">Confirmar Exclusão</span><button class="btn-icon" onclick="closeModal()">✕</button></div><div class="modal-body"><p>Esta ação não pode ser desfeita. Deseja excluir esta auditoria?</p></div><div class="modal-footer"><button class="btn btn-outline" onclick="closeModal()">Cancelar</button><button class="btn btn-danger" onclick="confirmarExclusaoAuditoria('${id}')">Excluir</button></div></div>`);
+}
+function confirmarExclusaoAuditoria(id) {
+  DATABASE.auditorias = DATABASE.auditorias.filter(a=>a.id!==id);
+  if (currentAuditoriaId===id) currentAuditoriaId=null;
+  closeModal();
+  saveDatabase();
+  renderHistorico();
+}
+
+// ==================== CADASTROS ====================
+let cadastroTab = 'empresas';
+function renderCadastros() {
+  document.getElementById('content').innerHTML = `
+  <div class="tabs no-print">
+    <button class="tab${cadastroTab==='empresas'?' active':''}" onclick="cadastroTab='empresas';renderCadastros()">🏢 Empresas</button>
+    <button class="tab${cadastroTab==='unidades'?' active':''}" onclick="cadastroTab='unidades';renderCadastros()">🏭 Unidades</button>
+    <button class="tab${cadastroTab==='auditores'?' active':''}" onclick="cadastroTab='auditores';renderCadastros()">👤 Auditores</button>
+  </div>
+  <div id="cadastro-content"></div>`;
+  if (cadastroTab==='empresas') renderCadastroEmpresas();
+  else if (cadastroTab==='unidades') renderCadastroUnidades();
+  else renderCadastroAuditores();
+}
+
+function renderCadastroEmpresas() {
+  const cc = document.getElementById('cadastro-content');
+  cc.innerHTML = `
+  <div class="card">
+    <div class="card-header"><span class="card-title">Empresas (${DATABASE.empresas.length})</span><button class="btn btn-primary btn-sm no-print" onclick="modalEmpresa()">+ Adicionar</button></div>
+    ${DATABASE.empresas.length===0?`<div class="empty-state" style="padding:40px"><div class="icon" style="font-size:36px">🏢</div><p>Nenhuma empresa cadastrada.</p><button class="btn btn-primary" onclick="modalEmpresa()">+ Adicionar empresa</button></div>`:`
+    <div class="table-wrap"><table>
+      <thead><tr><th>Nome</th><th>Unidades</th><th>Auditorias</th><th class="no-print">Ações</th></tr></thead>
+      <tbody>${DATABASE.empresas.map(e=>{
+        const uns=DATABASE.unidades.filter(u=>u.empresaId===e.id).length;
+        const auds=DATABASE.auditorias.filter(a=>a.empresa===e.id).length;
+        return`<tr><td>${escHtml(e.nome)}</td><td>${uns}</td><td>${auds}</td>
+        <td class="no-print"><button class="btn-icon" onclick="modalEmpresa('${e.id}')">✏️</button>
+        <button class="btn-icon" onclick="excluirEmpresa('${e.id}')">🗑️</button></td></tr>`;
+      }).join('')}</tbody>
+    </table></div>`}
+  </div>`;
+}
+function modalEmpresa(id) {
+  const e = id ? DATABASE.empresas.find(x=>x.id===id) : null;
+  showModal(`<div class="modal"><div class="modal-header"><span class="modal-title">${e?'Editar':'Nova'} Empresa</span><button class="btn-icon" onclick="closeModal()">✕</button></div>
+  <div class="modal-body">
+    <div class="form-group"><label class="form-label">Nome da empresa *</label><input class="form-control" id="inp-empresa-nome" value="${escHtml(e?.nome||'')}" placeholder="Nome da empresa" autofocus></div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-outline" onclick="closeModal()">Cancelar</button>
+    <button class="btn btn-primary" onclick="salvarEmpresa('${id||''}')">Salvar</button>
+  </div></div>`);
+  setTimeout(()=>document.getElementById('inp-empresa-nome')?.focus(),100);
+}
+function salvarEmpresa(id) {
+  const nome = document.getElementById('inp-empresa-nome').value.trim();
+  if (!nome) { showToast('Informe o nome da empresa.','danger'); return; }
+  if (id) {
+    const e = DATABASE.empresas.find(x=>x.id===id);
+    if(e) e.nome=nome;
+  } else {
+    DATABASE.empresas.push({id:generateId(),nome});
+  }
+  closeModal(); saveDatabase(); renderCadastroEmpresas();
+}
+function excluirEmpresa(id) {
+  const auds = DATABASE.auditorias.filter(a=>a.empresa===id).length;
+  const msg = auds>0?`Esta empresa possui ${auds} auditoria(s) vinculada(s). Ao excluir, os dados serão mantidos, mas a empresa não aparecerá nos selects. Deseja continuar?`:'Deseja excluir esta empresa?';
+  showModal(`<div class="modal"><div class="modal-header"><span class="modal-title">Confirmar Exclusão</span><button class="btn-icon" onclick="closeModal()">✕</button></div><div class="modal-body"><p>${msg}</p></div><div class="modal-footer"><button class="btn btn-outline" onclick="closeModal()">Cancelar</button><button class="btn btn-danger" onclick="confirmarExcluirEmpresa('${id}')">Excluir</button></div></div>`);
+}
+function confirmarExcluirEmpresa(id) {
+  DATABASE.empresas = DATABASE.empresas.filter(e=>e.id!==id);
+  DATABASE.unidades = DATABASE.unidades.filter(u=>u.empresaId!==id);
+  closeModal(); saveDatabase(); renderCadastroEmpresas();
+}
+
+function renderCadastroUnidades() {
+  const cc = document.getElementById('cadastro-content');
+  cc.innerHTML = `
+  <div class="card">
+    <div class="card-header"><span class="card-title">Unidades (${DATABASE.unidades.length})</span><button class="btn btn-primary btn-sm no-print" onclick="modalUnidade()">+ Adicionar</button></div>
+    ${DATABASE.unidades.length===0?`<div class="empty-state" style="padding:40px"><div class="icon" style="font-size:36px">🏭</div><p>Nenhuma unidade cadastrada.</p><button class="btn btn-primary" onclick="modalUnidade()">+ Adicionar unidade</button></div>`:`
+    <div class="table-wrap"><table>
+      <thead><tr><th>Nome</th><th>Empresa</th><th class="no-print">Ações</th></tr></thead>
+      <tbody>${DATABASE.unidades.map(u=>{
+        const emp=DATABASE.empresas.find(e=>e.id===u.empresaId);
+        return`<tr><td>${escHtml(u.nome)}</td><td>${escHtml(emp?.nome||'—')}</td>
+        <td class="no-print"><button class="btn-icon" onclick="modalUnidade('${u.id}')">✏️</button>
+        <button class="btn-icon" onclick="excluirUnidade('${u.id}')">🗑️</button></td></tr>`;
+      }).join('')}</tbody>
+    </table></div>`}
+  </div>`;
+}
+function modalUnidade(id) {
+  const u = id ? DATABASE.unidades.find(x=>x.id===id) : null;
+  const empOpts = DATABASE.empresas.map(e=>`<option value="${e.id}" ${u?.empresaId===e.id?'selected':''}>${escHtml(e.nome)}</option>`).join('');
+  showModal(`<div class="modal"><div class="modal-header"><span class="modal-title">${u?'Editar':'Nova'} Unidade</span><button class="btn-icon" onclick="closeModal()">✕</button></div>
+  <div class="modal-body">
+    <div class="form-group"><label class="form-label">Nome da unidade *</label><input class="form-control" id="inp-unidade-nome" value="${escHtml(u?.nome||'')}" placeholder="Ex: Planta São Paulo"></div>
+    <div class="form-group"><label class="form-label">Empresa *</label><select class="form-control" id="inp-unidade-empresa"><option value="">Selecione...</option>${empOpts}</select></div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-outline" onclick="closeModal()">Cancelar</button>
+    <button class="btn btn-primary" onclick="salvarUnidade('${id||''}')">Salvar</button>
+  </div></div>`);
+  setTimeout(()=>document.getElementById('inp-unidade-nome')?.focus(),100);
+}
+function salvarUnidade(id) {
+  const nome = document.getElementById('inp-unidade-nome').value.trim();
+  const empresaId = document.getElementById('inp-unidade-empresa').value;
+  if (!nome||!empresaId) { showToast('Preencha todos os campos.','danger'); return; }
+  if (id) {
+    const u=DATABASE.unidades.find(x=>x.id===id);
+    if(u){u.nome=nome;u.empresaId=empresaId;}
+  } else {
+    DATABASE.unidades.push({id:generateId(),nome,empresaId});
+  }
+  closeModal(); saveDatabase(); renderCadastroUnidades();
+}
+function excluirUnidade(id) {
+  showModal(`<div class="modal"><div class="modal-header"><span class="modal-title">Confirmar Exclusão</span><button class="btn-icon" onclick="closeModal()">✕</button></div><div class="modal-body"><p>Deseja excluir esta unidade?</p></div><div class="modal-footer"><button class="btn btn-outline" onclick="closeModal()">Cancelar</button><button class="btn btn-danger" onclick="DATABASE.unidades=DATABASE.unidades.filter(u=>u.id!=='${id}');closeModal();saveDatabase();renderCadastroUnidades()">Excluir</button></div></div>`);
+}
+
+function renderCadastroAuditores() {
+  const cc = document.getElementById('cadastro-content');
+  cc.innerHTML = `
+  <div class="card">
+    <div class="card-header"><span class="card-title">Auditores (${DATABASE.auditores.length})</span><button class="btn btn-primary btn-sm no-print" onclick="modalAuditor()">+ Adicionar</button></div>
+    ${DATABASE.auditores.length===0?`<div class="empty-state" style="padding:40px"><div class="icon" style="font-size:36px">👤</div><p>Nenhum auditor cadastrado.</p><button class="btn btn-primary" onclick="modalAuditor()">+ Adicionar auditor</button></div>`:`
+    <div class="table-wrap"><table>
+      <thead><tr><th>Nome</th><th>Cargo</th><th>Auditorias</th><th class="no-print">Ações</th></tr></thead>
+      <tbody>${DATABASE.auditores.map(a=>{
+        const auds=DATABASE.auditorias.filter(x=>x.auditor===a.id).length;
+        return`<tr><td>${escHtml(a.nome)}</td><td>${escHtml(a.cargo||'—')}</td><td>${auds}</td>
+        <td class="no-print"><button class="btn-icon" onclick="modalAuditor('${a.id}')">✏️</button>
+        <button class="btn-icon" onclick="excluirAuditor('${a.id}')">🗑️</button></td></tr>`;
+      }).join('')}</tbody>
+    </table></div>`}
+  </div>`;
+}
+function modalAuditor(id) {
+  const a = id ? DATABASE.auditores.find(x=>x.id===id) : null;
+  showModal(`<div class="modal"><div class="modal-header"><span class="modal-title">${a?'Editar':'Novo'} Auditor</span><button class="btn-icon" onclick="closeModal()">✕</button></div>
+  <div class="modal-body">
+    <div class="form-group"><label class="form-label">Nome completo *</label><input class="form-control" id="inp-aud-nome" value="${escHtml(a?.nome||'')}" placeholder="Nome do auditor"></div>
+    <div class="form-group"><label class="form-label">Cargo (opcional)</label><input class="form-control" id="inp-aud-cargo" value="${escHtml(a?.cargo||'')}" placeholder="Ex: Analista de Qualidade"></div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-outline" onclick="closeModal()">Cancelar</button>
+    <button class="btn btn-primary" onclick="salvarAuditor('${id||''}')">Salvar</button>
+  </div></div>`);
+  setTimeout(()=>document.getElementById('inp-aud-nome')?.focus(),100);
+}
+function salvarAuditor(id) {
+  const nome = document.getElementById('inp-aud-nome').value.trim();
+  const cargo = document.getElementById('inp-aud-cargo').value.trim();
+  if (!nome) { showToast('Informe o nome do auditor.','danger'); return; }
+  if (id) {
+    const a=DATABASE.auditores.find(x=>x.id===id);
+    if(a){a.nome=nome;a.cargo=cargo;}
+  } else {
+    DATABASE.auditores.push({id:generateId(),nome,cargo});
+  }
+  closeModal(); saveDatabase(); renderCadastroAuditores();
+}
+function excluirAuditor(id) {
+  const auds=DATABASE.auditorias.filter(a=>a.auditor===id).length;
+  const msg=auds>0?`Este auditor possui ${auds} auditoria(s) vinculada(s). Deseja continuar?`:'Deseja excluir este auditor?';
+  showModal(`<div class="modal"><div class="modal-header"><span class="modal-title">Confirmar Exclusão</span><button class="btn-icon" onclick="closeModal()">✕</button></div><div class="modal-body"><p>${msg}</p></div><div class="modal-footer"><button class="btn btn-outline" onclick="closeModal()">Cancelar</button><button class="btn btn-danger" onclick="DATABASE.auditores=DATABASE.auditores.filter(a=>a.id!=='${id}');closeModal();saveDatabase();renderCadastroAuditores()">Excluir</button></div></div>`);
+}
+
+// ==================== INIT ====================
+window.addEventListener('beforeunload', function(e) {
+  if (currentPage === 'nova-auditoria' && Object.keys(auditoriaForm.respostas).length > 0) {
+    e.preventDefault(); e.returnValue = '';
+  }
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+  resetAuditoriaForm();
+  if (DATABASE.auditorias.length > 0) {
+    setTimeout(()=>showToast(`${DATABASE.auditorias.length} auditoria(s) carregada(s).`,'success'), 500);
+    currentAuditoriaId = [...DATABASE.auditorias].sort((a,b)=>new Date(b.dataHora)-new Date(a.dataHora))[0]?.id || null;
+  }
+  render();
+});
+</script>
+</body>
+</html>

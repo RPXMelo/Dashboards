@@ -27,15 +27,6 @@ from constructs import Construct
 HOSTED_ZONE_DOMAIN = "planlogweb.com.br"
 SUBDOMAIN = "dashboards"
 
-# Restringe o embed da distribuição a iframes do Google Sites via CSP
-# frame-ancestors (aplicado pelo navegador com base na origem real do
-# documento pai — não depende de headers enviados pelo Google Sites).
-# frame-ancestors exige que TODOS os ancestrais do frame combinem com a
-# política, e o Google Sites embute conteúdo customizado através de um
-# iframe sandbox intermediário em *.googleusercontent.com, por isso esse
-# domínio também precisa estar na lista.
-ALLOWED_FRAME_ANCESTORS = "https://sites.google.com https://*.googleusercontent.com"
-
 
 class DashboardsStack(Stack):
 
@@ -74,18 +65,6 @@ class DashboardsStack(Stack):
         # ------------------------------------------------------------------
         # CloudFront — CDN com HTTPS na frente do bucket
         # ------------------------------------------------------------------
-        # Impede que o site seja embutido em iframe fora do Google Sites.
-        frame_ancestors_policy = cloudfront.ResponseHeadersPolicy(
-            self, "FrameAncestorsPolicy",
-            response_headers_policy_name=f"{prefix}-frame-ancestors",
-            security_headers_behavior=cloudfront.ResponseSecurityHeadersBehavior(
-                content_security_policy=cloudfront.ResponseHeadersContentSecurityPolicy(
-                    content_security_policy=f"frame-ancestors {ALLOWED_FRAME_ANCESTORS};",
-                    override=True,
-                ),
-            ),
-        )
-
         self.distribution = cloudfront.Distribution(
             self, "Distribution",
             domain_names=[full_domain],
@@ -94,7 +73,6 @@ class DashboardsStack(Stack):
                 origin=origins.S3Origin(self.site_bucket),
                 viewer_protocol_policy=cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
                 cache_policy=cloudfront.CachePolicy.CACHING_OPTIMIZED,
-                response_headers_policy=frame_ancestors_policy,
             ),
             default_root_object="index.html",
             error_responses=[
